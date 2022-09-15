@@ -38,10 +38,8 @@ class LanguageViews(View):
 				self.response['res_data']=res
 			return send_200(self.response)
 		
-		except ValidationError as ex:
+		except (ValidationError,ObjectDoesNotExist) as ex:
 			self.response['res_str'] = str(ex)	
-		except ObjectDoesNotExist as e:
-			self.response['Error Msg']=str(e)
 		except Exception as e:
 			self.response['Error Msg']="Something is Wrong"
 		return send_400(self.response)		
@@ -62,9 +60,7 @@ class LanguageViews(View):
 			self.response['res_str'] = "Language Successfully Created"
 			return send_201(self.response)
 
-		except ValidationError as ex:
-			self.response['res_str'] = str(ex)
-		except ObjectAlreadyExist as ex:
+		except (ValidationError,ObjectDoesNotExist) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
 			self.response['Error Msg']="Something is Wrong"
@@ -85,13 +81,10 @@ class LanguageViews(View):
 			except:
 				raise ObjectDoesNotExist("Language not found")
 			
-		except ValidationError as ex:
+		except (ValidationError,ObjectDoesNotExist) as ex:
 			self.response['res_str'] = str(ex)
-		except ObjectDoesNotExist as e:
-			self.response['Error Msg']=str(e)
 		except Exception as e:
 			self.response['Error Msg']="Something is Wrong"
-
 		return send_404(self.response)
 	
 	def put (self, request, *args, **kwargs):
@@ -112,7 +105,7 @@ class LanguageViews(View):
 				raise ObjectDoesNotExist("Requested language does not exist")
 			return send_201(self.response)
 
-		except ValidationError as ex:
+		except (ValidationError,ObjectDoesNotExist) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
 			self.response['Error Msg']="Something is Wrong"
@@ -145,10 +138,8 @@ class AuthorViews(View):
 				self.response['res_data']=res
 			return send_200(self.response)
 		
-		except ValidationError as ex:
-			self.response['res_str'] = str(ex)	
-		except ObjectDoesNotExist as e:
-			self.response['Error Msg']=str(e)
+		except (ValidationError,ObjectDoesNotExist) as ex:
+			self.response['res_str'] = str(ex)
 		except Exception as e:
 			self.response['Error Msg']="Something is Wrong"
 		return send_400(self.response)
@@ -174,26 +165,19 @@ class AuthorViews(View):
 			self.response['res_str'] = "Author Successfully Created"
 			return send_201(self.response)
 
-		except ValueError as ex:
-			self.response['res_str']= str(ex)
-
-		except ValidationError as ex:
+		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
 			self.response['res_str'] = str(ex)
-		
-		except ObjectAlreadyExist as ex:
-			self.response['res_str'] = str(ex)
-
 		except Exception as e:
 			self.response['Error Msg']="Something is Wrong"
-
 		return send_400(self.response)
+
 	def delete(self, request, *args, **kwargs):
 		try:
 			params=request.GET.dict()
 			validate_schema(params)
 			name = params.get('name').lower()
 
-			if Author.objects.filter(name=name).exists():
+			try:
 				auth_obj=Author.objects.get(name=name)
 				res=auth_obj.as_dict()
 				auth_obj.status='D'
@@ -202,57 +186,39 @@ class AuthorViews(View):
 				self.response['res_str'] = "Author Deleted Successfully"
 				return send_201(self.response)
 
-			else:
+			except:
 				raise ObjectDoesNotExist("Author not found")
 			
-		except ValidationError as ex:
+		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
 			self.response['res_str'] = str(ex)
-
-		except ObjectDoesNotExist as e:
-			self.response['Error Msg']=str(e)
-
 		except Exception as e:
 			self.response['Error Msg']="Something is Wrong"
-
-		return send_404(self.response)
+		return send_400(self.response)
 	
 	def put (self, request, *args, **kwargs):
 		try:
-			#import pdb; pdb.set_trace()
 			params=request.GET.dict()
-			validate_schema(params) #checks if name toh hai hi na
-
+			validate_schema(params) 
 			name = params.get('name').lower()
-
-			if not Author.objects.filter(name=name).exists():
+			try:	
+				author_obj = Author.objects.get(name=name)
+				description = params.get('description')
+				meta_data = params.get('meta_data')
+				if meta_data and not is_json(meta_data):
+					raise ValueError("meta-data is not in JSON form")
+				author_obj.description=description
+				author_obj.meta_data=meta_data
+				author_obj.save()
+				self.response['res_data'] = author_obj.as_dict()
+				self.response['res_str'] = "Author Updated Successfully"
+			except:
 				raise ObjectDoesNotExist("Requested author does not exist")
-			
-			description = params.get('description')
-			meta_data = params.get('meta_data')
-
-			if meta_data and not is_json(meta_data):
-				raise ValueError("meta-data is not in JSON form")
-
-			author_obj = Author.objects.get(name=name)
-			author_obj.description=description
-			author_obj.meta_data=meta_data
-			author_obj.save()
-			self.response['res_data'] = author_obj.as_dict()
-			self.response['res_str'] = "Author Updated Successfully"
 			return send_201(self.response)
 
-		except ObjectDoesNotExist as ex:
+		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
 			self.response['res_str'] = str(ex)
-		
-		except ValueError as ex:
-			self.response['res_str']= str(ex)
-
-		except ValidationError as ex:
-			self.response['res_str'] = str(ex)
-
 		except Exception as e:
 			self.response['Error Msg']="Something is Wrong"
-
 		return send_400(self.response)	
 
 class PublisherViews(View):
@@ -265,11 +231,10 @@ class PublisherViews(View):
 			name=params.get('name')
 			if name :
 				validate_schema(params)
-				if Publisher.objects.filter(name=name.lower()).exists():
+				try:
 					self.response['res_data']=Publisher.objects.get(name=params.get('name').lower()).as_dict()
-				else:
+				except:
 					raise ObjectDoesNotExist("Requested Publisher does not exist")
-
 			else:
 				limit=5
 				ath=Publisher.objects.all()
@@ -284,15 +249,10 @@ class PublisherViews(View):
 
 			return send_200(self.response)
 		
-		except ValidationError as ex:
+		except (ValidationError,ObjectDoesNotExist,ValueError,ObjectAlreadyExist) as ex:
 			self.response['res_str'] = str(ex)
-			
-		except ObjectDoesNotExist as e:
-			self.response['Error Msg']=str(e)
-
 		except Exception as e:
 			self.response['Error Msg']="Something is Wrong"
-
 		return send_400(self.response)
 
 	def post(self, request, *args, **kwargs):
@@ -315,18 +275,10 @@ class PublisherViews(View):
 			self.response['res_str'] = "Publisher Successfully Created"
 			return send_201(self.response)
 
-		except ValueError as ex:
-			self.response['res_str']= str(ex)
-
-		except ValidationError as ex:
+		except (ValidationError,ObjectDoesNotExist,ValueError,ObjectAlreadyExist) as ex:
 			self.response['res_str'] = str(ex)
-		
-		except ObjectAlreadyExist as ex:
-			self.response['res_str'] = str(ex)
-
 		except Exception as e:
 			self.response['Error Msg']="Something is Wrong"
-
 		return send_400(self.response)
 
 	def delete(self, request, *args, **kwargs):
@@ -345,13 +297,11 @@ class PublisherViews(View):
 			except:
 				raise ObjectDoesNotExist("Publisher not found")
 			
-		except ValidationError as ex:
+		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
 			self.response['res_str'] = str(ex)
-		except ObjectDoesNotExist as e:
-			self.response['Error Msg']=str(e)
 		except Exception as e:
 			self.response['Error Msg']="Something is Wrong"
-		return send_404(self.response)
+		return send_400(self.response)
 
 	def put (self, request, *args, **kwargs):
 		try:
@@ -370,11 +320,7 @@ class PublisherViews(View):
 			self.response['res_str'] = "Publisher Updated Successfully"
 			return send_201(self.response)
 
-		except ObjectDoesNotExist as ex:
-			self.response['res_str'] = str(ex)	
-		except ValueError as ex:
-			self.response['res_str']= str(ex)
-		except ValidationError as ex:
+		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
 			self.response['Error Msg']="Something is Wrong"
@@ -412,10 +358,8 @@ class BookViews(View):
 				self.response['res_data']=res
 			return send_200(self.response)
 
-		except ValidationError as ex:
-			self.response['res_str'] = str(ex)			
-		except ObjectDoesNotExist as e:
-			self.response['Error Msg']=str(e)
+		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
+			self.response['res_str'] = str(ex)
 		except Exception as e:
 			self.response['Error Msg']="Something is Wrong"
 		return send_400(self.response)
@@ -469,11 +413,7 @@ class BookViews(View):
 			self.response['res_str'] = "Book Successfully Created"
 			return send_201(self.response)
 
-		except ObjectDoesNotExist as ex:
-			self.response['res_str'] = str(ex)		
-		except ValueError as ex:
-			self.response['res_str']= str(ex)
-		except ValidationError as ex:
+		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
 			self.response['Error Msg']="Something is Wrong"
@@ -495,14 +435,10 @@ class BookViews(View):
 				raise ObjectDoesNotExist("Requested BOOK does not exist")
 			return send_201(self.response)
 
-		except ObjectDoesNotExist as ex:
-			self.response['res_str'] = str(ex)		
-		except ValueError as ex:
-			self.response['res_str']= str(ex)
-		except ValidationError as ex:
+		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
-			self.response['res_str'] = "Something Went Wrong"
+			self.response['Error Msg']="Something is Wrong"
 		return send_400(self.response)
 
 	def put(self, request, *args, **kwargs):
@@ -556,11 +492,7 @@ class BookViews(View):
 			self.response['res_str'] = "Book Updated Successfully"
 			return send_201(self.response)
 
-		except ObjectDoesNotExist as ex:
-			self.response['res_str'] = str(ex)	
-		except ValueError as ex:
-			self.response['res_str']= str(ex)
-		except ValidationError as ex:
+		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
 			self.response['Error Msg']="Something is Wrong"
@@ -590,10 +522,8 @@ class EBookViews(View):
 				self.response['res_data']=res
 			return send_201(self.response)
 
-		except ValidationError as ex:
-			self.response['res_str'] = str(ex)		
-		except ObjectDoesNotExist as e:
-			self.response['Error Msg']=str(e)
+		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
+			self.response['res_str'] = str(ex)
 		except Exception as e:
 			self.response['Error Msg']="Something is Wrong"
 		return send_400(self.response)
@@ -612,9 +542,7 @@ class EBookViews(View):
 			self.response['res_str'] = "EBook Successfully Created"
 			return send_201(self.response)
 		
-		except ObjectDoesNotExist as ex:
-			self.response['res_str'] = str(ex)
-		except ValidationError as ex:
+		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
 			self.response['Error Msg']="Something is Wrong"
@@ -635,16 +563,11 @@ class EBookViews(View):
 			self.response['res_str'] = "EBook Deleted Successfully"
 			return send_201(self.response)
 
-		except ValueError as ex:
-			self.response['res_str']= str(ex)
-		except ObjectDoesNotExist as ex:
+		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
 			self.response['res_str'] = str(ex)
-		except ValidationError as ex:
-			self.response['res_str'] = str(ex)		
 		except Exception as e:
-			self.response['res_data'] = e.msg
-			self.response['res_str'] = "Something Went Wrong"
-		return send_404(self.response)
+			self.response['Error Msg']="Something is Wrong"
+		return send_400(self.response)
 
 	def put (self, request, *args, **kwargs):
 		try:
@@ -661,14 +584,11 @@ class EBookViews(View):
 			self.response['res_str'] = "EBook Location Updated Successfully"
 			return send_201(self.response)
 
-		except ObjectDoesNotExist as ex:
+		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
 			self.response['res_str'] = str(ex)
-		except ValidationError as ex:
-			self.response['res_str'] = str(ex)		
 		except Exception as e:
-			self.response['res_data'] = e.msg
-			self.response['res_str'] = "Something Went Wrong"
-		return send_404(self.response)	
+			self.response['Error Msg']="Something is Wrong"
+		return send_400(self.response)	
 
 class UserViews(View):
 	def __init__(self):
@@ -684,11 +604,11 @@ class UserViews(View):
 				raise ValidationError("User with this email id does not exist")
 			return send_201(self.response)
 			
-		except ValidationError as ex:
-			self.response['res_str'] = str(ex)		
+		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
+			self.response['res_str'] = str(ex)
 		except Exception as e:
-			self.response['res_str'] = "Something Went Wrong"
-		return send_404(self.response)
+			self.response['Error Msg']="Something is Wrong"
+		return send_400(self.response)
 	
 	def post(self, request, *args, **kwargs):
 		try:
@@ -734,11 +654,7 @@ class UserViews(View):
 			self.response['res_str'] = "User Successfully Created"
 			return send_201(self.response)
 
-		except ObjectDoesNotExist as ex:
-			self.response['res_str'] = str(ex)		
-		except ValueError as ex:
-			self.response['res_str']= str(ex)
-		except ValidationError as ex:
+		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
 			self.response['Error Msg']="Something is Wrong"
@@ -758,11 +674,11 @@ class UserViews(View):
 				raise ValidationError("User with this email id doesnot exist")
 			return send_201(self.response)
 			
-		except ValidationError as ex:
-			self.response['res_str'] = str(ex)		
+		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
+			self.response['res_str'] = str(ex)
 		except Exception as e:
-			self.response['res_str'] = "Something Went Wrong"	
-		return send_404(self.response)
+			self.response['Error Msg']="Something is Wrong"
+		return send_400(self.response)
 
 	def put (self, request, *args, **kwargs):
 		try:
@@ -798,11 +714,7 @@ class UserViews(View):
 			self.response['res_str'] = "User Updated Successfully"
 			return send_201(self.response)
 
-		except ObjectDoesNotExist as ex:
-			self.response['res_str'] = str(ex)	
-		except ValueError as ex:
-			self.response['res_str']= str(ex)
-		except ValidationError as ex:
+		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
 			self.response['Error Msg']="Something is Wrong"
@@ -823,10 +735,8 @@ class HardCopyViews(View):
 				raise ObjectDoesNotExist("Requested HardCopy does not exist")
 			return send_201(self.response)
 				
-		except ValidationError as ex:
-			self.response['res_str'] = str(ex)	
-		except ObjectDoesNotExist as e:
-			self.response['Error Msg']=str(e)
+		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
+			self.response['res_str'] = str(ex)
 		except Exception as e:
 			self.response['Error Msg']="Something is Wrong"
 		return send_400(self.response)
@@ -855,9 +765,7 @@ class HardCopyViews(View):
 			self.response['res_str'] = "HardCopy Successfully Created"
 			return send_201(self.response)
 		
-		except ValidationError as ex:
-			self.response['res_str'] = str(ex)
-		except ObjectDoesNotExist as ex:
+		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
 			self.response['Error Msg']="Something is Wrong"
@@ -878,10 +786,8 @@ class HardCopyViews(View):
 			self.response['res_str'] = "HardCopy Deleted Successfully"
 			return send_201(self.response)
 				
-		except ValidationError as ex:
-			self.response['res_str'] = str(ex)		
-		except ObjectDoesNotExist as e:
-			self.response['Error Msg']=str(e)
+		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
+			self.response['res_str'] = str(ex)
 		except Exception as e:
 			self.response['Error Msg']="Something is Wrong"
 		return send_400(self.response)
@@ -914,11 +820,7 @@ class HardCopyViews(View):
 			self.response['res_str'] = "HardCopy Updated Successfully"
 			return send_201(self.response)
 
-		except ObjectDoesNotExist as ex:
-			self.response['res_str'] = str(ex)
-		except ValueError as ex:
-			self.response['res_str']= str(ex)
-		except ValidationError as ex:
+		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
 			self.response['Error Msg']="Something is Wrong"
