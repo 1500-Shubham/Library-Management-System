@@ -18,7 +18,7 @@ class BaseModel(models.Model):
 		abstract = True
 
 class Language(BaseModel):
-	readonly_fields=('language_id')
+	#readonly_fields=('language_id')
 	language_id = models.UUIDField(primary_key=True, default = uuid.uuid4,editable = False)
 	name = models.CharField(max_length=100,unique=True)
 	script = models.CharField(max_length=100,null=True,blank=True)
