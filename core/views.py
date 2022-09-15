@@ -346,14 +346,13 @@ class BookViews(View):
 				except:
 					raise ObjectDoesNotExist("Requested BOOK does not exist")
 			else:
-				limit=5
 				ath=Book.objects.all()
 				res={}
 				count=0
 				for item in ath:
 					res[item.name]=item.as_dict()
 					count=count+1
-					if count >=limit :
+					if count >=LIMIT :
 						break
 				self.response['res_data']=res
 			return send_200(self.response)
@@ -381,10 +380,10 @@ class BookViews(View):
 				raise ValidationError("Need at least one language")
 
 			publisher_name = params.get('publisher')
-			if not Publisher.objects.filter(name=publisher_name.lower()).exists():
+			try:
+				publisher_obj=Publisher.objects.get(name=publisher_name.lower())
+			except:
 				raise ObjectDoesNotExist("Publisher with "+publisher_name + " name not exist")
-			publisher_obj=Publisher.objects.get(name=publisher_name.lower())
-			
 			extra_details = params.get('extra_details')
 			if extra_details and not is_json(extra_details):
 				raise ValueError("extra_details is not in JSON form")
