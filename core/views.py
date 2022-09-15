@@ -20,6 +20,8 @@ class LanguageViews(View):
 	def get(self, request, *args, **kwargs):
 		try:
 			params=request.GET.dict()
+			limit=params.get('limit',LIMIT)
+			offset=params.get('offset',OFFSET)
 			if params.get('name') :
 				validate_schema(params)
 				try:
@@ -28,13 +30,11 @@ class LanguageViews(View):
 					raise ObjectDoesNotExist("Requested language does not exist")
 			else:
 				res={}
-				count=0
 				lan=Language.objects.all()
-				for item in lan:
-					res[item.name]=item.as_dict()
-					count=count+1
-					if count >= LIMIT :
+				for index in range(offset,limit):
+					if index >= len(lan):
 						break
+					res[str(lan[index].language_id)]=lan[index].as_dict()	
 				self.response['res_data']=res
 			return send_200(self.response)
 		
@@ -129,12 +129,10 @@ class AuthorViews(View):
 			else:
 				ath=Author.objects.all()
 				res={}
-				count=0
-				for item in ath:
-					res[item.name]=item.as_dict()
-					count=count+1
-					if count >=limit :
+				for index in range(offset,limit):
+					if index >= len(ath):
 						break
+					res[str(ath[index].author_id)]=ath[index].as_dict()
 				self.response['res_data']=res
 			return send_200(self.response)
 		
@@ -229,6 +227,8 @@ class PublisherViews(View):
 		try:
 			params=request.GET.dict()
 			name=params.get('name')
+			limit=params.get('limit',LIMIT)
+			offset=params.get('offset',OFFSET)
 			if name :
 				validate_schema(params)
 				try:
@@ -236,15 +236,12 @@ class PublisherViews(View):
 				except:
 					raise ObjectDoesNotExist("Requested Publisher does not exist")
 			else:
-				limit=5
-				ath=Publisher.objects.all()
+				pub=Publisher.objects.all()
 				res={}
-				count=0
-				for item in ath:
-					res[item.name]=item.as_dict()
-					count=count+1
-					if count >=limit :
+				for index in range(offset,limit):
+					if index >= len(pub):
 						break
+					res[str(pub[index].publisher_id)]=pub[index].as_dict()
 				self.response['res_data']=res
 
 			return send_200(self.response)
@@ -334,6 +331,8 @@ class BookViews(View):
 		try:
 			params=request.GET.dict()
 			book_id=params.get('book_id')
+			limit=params.get('limit',LIMIT)
+			offset=params.get('offset',OFFSET)
 			if book_id :
 				try:
 					self.response['res_data']=Book.objects.get(book_id=book_id).as_dict()
@@ -346,15 +345,12 @@ class BookViews(View):
 				except:
 					raise ObjectDoesNotExist("Requested BOOK does not exist")
 			else:
-				limit=5
 				ath=Book.objects.all()
 				res={}
-				count=0
-				for item in ath:
-					res[item.name]=item.as_dict()
-					count=count+1
-					if count >=limit :
+				for index in range(offset,limit):
+					if index >= len(ath):
 						break
+					res[str(ath[index].book_id)]=ath[index].as_dict()
 				self.response['res_data']=res
 			return send_200(self.response)
 
@@ -381,10 +377,10 @@ class BookViews(View):
 				raise ValidationError("Need at least one language")
 
 			publisher_name = params.get('publisher')
-			if not Publisher.objects.filter(name=publisher_name.lower()).exists():
+			try:
+				publisher_obj=Publisher.objects.get(name=publisher_name.lower())
+			except:
 				raise ObjectDoesNotExist("Publisher with "+publisher_name + " name not exist")
-			publisher_obj=Publisher.objects.get(name=publisher_name.lower())
-			
 			extra_details = params.get('extra_details')
 			if extra_details and not is_json(extra_details):
 				raise ValueError("extra_details is not in JSON form")
