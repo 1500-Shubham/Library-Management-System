@@ -11,26 +11,18 @@ from .exceptions import *
 from django.core.exceptions import *
 from .constants import *
 import json
+from .utils import *
 
 class LanguageViews(View):
 	def __init__(self):
 		self.response=init_response()
-
-	def validate_schema(self, params, required_key=['name']):
-		keys = params.keys()
-		key_len = 0
-		for key in required_key:
-			if key in keys:
-				key_len += 1
-		if len(required_key) != key_len:
-			raise ValidationError("Invalid data")
 
 	def get(self, request, *args, **kwargs):
 		try:
 			params=request.GET.dict()
 			name=params.get('name')
 			if name :
-				self.validate_schema(params)
+				validate_schema(params)
 				if Language.objects.get(name=name.lower()):
 					self.response['res_data']=Language.objects.get(name=params.get('name').lower()).as_dict()
 				else:
@@ -63,7 +55,7 @@ class LanguageViews(View):
 		try:
 			#import pdb; pdb.set_trace()
 			params=request.POST.dict()
-			self.validate_schema(params) #checks if name toh hai hi na
+			validate_schema(params) #checks if name toh hai hi na
 
 			name = params.get('name').lower()
 
@@ -94,7 +86,7 @@ class LanguageViews(View):
 		#import pdb; pdb.set_trace()
 		try:
 			params=request.GET.dict()
-			self.validate_schema(params)
+			validate_schema(params)
 			name = params.get('name').lower()
 
 			if Language.objects.filter(name=name).exists():
@@ -123,7 +115,7 @@ class LanguageViews(View):
 		try:
 			#import pdb; pdb.set_trace()
 			params=request.GET.dict()
-			self.validate_schema(params) #checks if name toh hai hi na
+			validate_schema(params) #checks if name toh hai hi na
 
 			name = params.get('name').lower()
 
@@ -154,23 +146,6 @@ class AuthorViews(View):
 	def __init__(self):
 		self.response=init_response()
 
-	def validate_schema(self, params, required_key=['name']):
-
-		keys = params.keys()
-		key_len = 0
-		for key in required_key:
-			if key in keys:
-				key_len += 1
-		if len(required_key) != key_len:
-			raise ValidationError("Invalid data")
-
-	def is_json(self,myjson):
-		try:
-			json.loads(myjson)
-		except ValueError as e:
-			return False
-		return True
-
 	def get(self, request, *args, **kwargs):
 		try:
 			params=request.GET.dict()
@@ -178,7 +153,6 @@ class AuthorViews(View):
 			limit=params.get('limit',LIMIT)
 			offset=params.get('offset',OFFSET)
 			if name :
-				#self.validate_schema(params)
 				if Author.objects.filter(name=name.lower()).exists():
 					self.response['res_data']=Author.objects.get(name=params.get('name').lower()).as_dict()
 				else:
@@ -213,7 +187,7 @@ class AuthorViews(View):
 		try:
 			#import pdb; pdb.set_trace()
 			params=request.POST.dict()
-			self.validate_schema(params) 
+			validate_schema(params) 
 			name = params.get('name').lower()
 			description = params.get('description')
 			meta_data = params.get('meta_data')
@@ -221,7 +195,7 @@ class AuthorViews(View):
 			if Author.objects.filter(name=name).exists():
 				raise ObjectAlreadyExist("Language with this name already exist")
 
-			if meta_data and not self.is_json(meta_data):
+			if meta_data and not is_json(meta_data):
 				raise ValueError("meta-data is not in JSON form")
 
 			author_obj = Author.objects.create(name=name,meta_data=meta_data,description=description)
@@ -247,7 +221,7 @@ class AuthorViews(View):
 	def delete(self, request, *args, **kwargs):
 		try:
 			params=request.GET.dict()
-			self.validate_schema(params)
+			validate_schema(params)
 			name = params.get('name').lower()
 
 			if Author.objects.filter(name=name).exists():
@@ -277,7 +251,7 @@ class AuthorViews(View):
 		try:
 			#import pdb; pdb.set_trace()
 			params=request.GET.dict()
-			self.validate_schema(params) #checks if name toh hai hi na
+			validate_schema(params) #checks if name toh hai hi na
 
 			name = params.get('name').lower()
 
@@ -287,7 +261,7 @@ class AuthorViews(View):
 			description = params.get('description')
 			meta_data = params.get('meta_data')
 
-			if meta_data and not self.is_json(meta_data):
+			if meta_data and not is_json(meta_data):
 				raise ValueError("meta-data is not in JSON form")
 
 			author_obj = Author.objects.get(name=name)
@@ -315,30 +289,13 @@ class AuthorViews(View):
 class PublisherViews(View):
 	def __init__(self):
 		self.response=init_response()
-	
-	def validate_schema(self, params, required_key=['name']):
-
-		keys = params.keys()
-		key_len = 0
-		for key in required_key:
-			if key in keys:
-				key_len += 1
-		if len(required_key) != key_len:
-			raise ValidationError("Invalid data")
-
-	def is_json(self,myjson):
-		try:
-			json.loads(myjson)
-		except ValueError as e:
-			return False
-		return True
 
 	def get(self, request, *args, **kwargs):
 		try:
 			params=request.GET.dict()
 			name=params.get('name')
 			if name :
-				self.validate_schema(params)
+				validate_schema(params)
 				if Publisher.objects.filter(name=name.lower()).exists():
 					self.response['res_data']=Publisher.objects.get(name=params.get('name').lower()).as_dict()
 				else:
@@ -372,14 +329,14 @@ class PublisherViews(View):
 	def post(self, request, *args, **kwargs):
 		try:
 			params=request.POST.dict()
-			self.validate_schema(params) 
+			validate_schema(params) 
 			name = params.get('name').lower()
 			meta_data = params.get('meta_data')
 
 			if Publisher.objects.filter(name=name).exists():
 				raise ObjectAlreadyExist("Language with this name already exist")
 
-			if meta_data and not self.is_json(meta_data):
+			if meta_data and not is_json(meta_data):
 				raise ValueError("meta-data is not in JSON form")
 
 			pub_obj = Publisher.objects.create(name=name,meta_data=meta_data)
@@ -406,7 +363,7 @@ class PublisherViews(View):
 	def delete(self, request, *args, **kwargs):
 		try:
 			params=request.GET.dict()
-			self.validate_schema(params)
+			validate_schema(params)
 			name = params.get('name').lower()
 
 			if Publisher.objects.filter(name=name).exists():
@@ -436,7 +393,7 @@ class PublisherViews(View):
 		try:
 			#import pdb; pdb.set_trace()
 			params=request.GET.dict()
-			self.validate_schema(params) #checks if name toh hai hi na
+			validate_schema(params) #checks if name toh hai hi na
 
 			name = params.get('name').lower()
 
@@ -445,7 +402,7 @@ class PublisherViews(View):
 	
 			meta_data = params.get('meta_data')
 
-			if meta_data and not self.is_json(meta_data):
+			if meta_data and not is_json(meta_data):
 				raise ValueError("meta-data is not in JSON form")
 
 			pub_obj = Publisher.objects.get(name=name)
@@ -473,23 +430,6 @@ class BookViews(View):
 	def __init__(self):
 		self.response=init_response()
 
-	def validate_schema(self, params, required_key=['name']):
-
-		keys = params.keys()
-		key_len = 0
-		for key in required_key:
-			if key in keys:
-				key_len += 1
-		if len(required_key) != key_len:
-			raise ValidationError("Invalid Data")
-	
-	def is_json(self,myjson):
-		try:
-			json.loads(myjson)
-		except ValueError as e:
-			return False
-		return True
-	
 	def get(self, request, *args, **kwargs):
 		try:
 			params=request.GET.dict()
@@ -533,7 +473,7 @@ class BookViews(View):
 		try:
 			#import pdb; pdb.set_trace()
 			params=request.POST.dict()
-			self.validate_schema(params,['name','author','publisher','language'])
+			validate_schema(params,['name','author','publisher','language'])
 			name = params.get('name').lower()
 
 			author_name = params.get('author') #can be list multiple atlease one create
@@ -555,7 +495,7 @@ class BookViews(View):
 			
 
 			extra_details = params.get('extra_details')
-			if extra_details and not self.is_json(extra_details):
+			if extra_details and not is_json(extra_details):
 				raise ValueError("extra_details is not in JSON form")
 
 			book_type = None
@@ -600,7 +540,7 @@ class BookViews(View):
 
 		try:
 			params=request.GET.dict()
-			self.validate_schema(params,['book_id'])
+			validate_schema(params,['book_id'])
 			book_id = params.get('book_id')
 			if not Book.objects.filter(book_id=book_id).exists():
 				raise ObjectDoesNotExist("Requested BOOK does not exist")
@@ -631,7 +571,7 @@ class BookViews(View):
 		try:
 			#import pdb; pdb.set_trace()
 			params=request.GET.dict()
-			self.validate_schema(params,['book_id'])
+			validate_schema(params,['book_id'])
 			book_id = params.get('book_id')
 			if book_id and not Book.objects.filter(book_id=book_id).exists():
 				raise ObjectDoesNotExist("Requested BOOK does not exist")
@@ -650,7 +590,7 @@ class BookViews(View):
 
 			extra_details=book_obj.extra_details #by default
 			extra_param = params.get('extra_details')
-			if extra_param and not self.is_json(extra_param):
+			if extra_param and not is_json(extra_param):
 				raise ValueError("extra_details is not in JSON form")
 			elif extra_param:
 				extra_details=extra_param
@@ -697,15 +637,6 @@ class BookViews(View):
 class EBookViews(View):
 	def __init__(self):
 		self.response=init_response()
-	def validate_schema(self, params, required_key=['name'],msg=""):
-
-		keys = params.keys()
-		key_len = 0
-		for key in required_key:
-			if key in keys:
-				key_len += 1
-		if len(required_key) != key_len:
-			raise ValidationError("Invalid Data "+msg)
 
 	def get(self, request, *args, **kwargs):
 		try:
@@ -742,7 +673,7 @@ class EBookViews(View):
 	def post(self, request, *args, **kwargs):
 		try:
 			params=request.POST.dict() 
-			self.validate_schema(params,['book_id'],"Mandatory Book Key is needed")
+			validate_schema(params,['book_id'],"Mandatory Book Key is needed")
 			if Book.objects.filter(book_id=params.get('book_id')).exists():
 				book = Book.objects.get(book_id=params.get('book_id'))
 			else:
@@ -768,7 +699,7 @@ class EBookViews(View):
 		try:
 			#import pdb; pdb.set_trace()
 			params=request.GET.dict()
-			self.validate_schema(params,['ebook_id'],"Ebook id is needed")
+			validate_schema(params,['ebook_id'],"Ebook id is needed")
 			if EBook.objects.filter(ebook_id=params.get('ebook_id')).exists():
 				ebook_obj = EBook.objects.get(ebook_id=params.get('ebook_id'))
 			else:
@@ -797,7 +728,7 @@ class EBookViews(View):
 	def put (self, request, *args, **kwargs):
 		try:
 			params=request.GET.dict()
-			self.validate_schema(params,['ebook_id'],":Ebook id is needed")
+			validate_schema(params,['ebook_id'],":Ebook id is needed")
 			if EBook.objects.filter(ebook_id=params.get('ebook_id')).exists():
 				ebook_obj = EBook.objects.get(ebook_id=params.get('ebook_id'))
 			else:
@@ -823,28 +754,11 @@ class EBookViews(View):
 class UserViews(View):
 	def __init__(self):
 		self.response=init_response()
-	
-	def validate_schema(self, params, required_key=['name']):
-
-		keys = params.keys()
-		key_len = 0
-		for key in required_key:
-			if key in keys:
-				key_len += 1
-		if len(required_key) != key_len:
-			raise ValidationError("Invalid data")
-
-	def is_json(self,myjson):
-		try:
-			json.loads(myjson)
-		except ValueError as e:
-			return False
-		return True
 
 	def get(self, request, *args, **kwargs):
 		try:
 			params=request.GET.dict()
-			self.validate_schema(params,['email_id'])
+			validate_schema(params,['email_id'])
 			if not User.objects.filter(email_id=params.get('email_id')).exists():
 				raise ValidationError("User with this email id does not exist")
 			self.response['res_data']=User.objects.get(email_id=params.get('email_id')).as_dict()
@@ -863,7 +777,7 @@ class UserViews(View):
 			#import pdb; pdb.set_trace()
 			import re
 			params=request.POST.dict()
-			self.validate_schema(params,['first_name','mobile','email_id'])
+			validate_schema(params,['first_name','mobile','email_id'])
 			first_name = params.get('first_name').lower()
 			middle_name = params.get('middle_name').lower()
 			last_name = params.get('last_name').lower()
@@ -877,7 +791,7 @@ class UserViews(View):
 				raise ValidationError("Email Id Already Exist")
 			
 			meta_data = params.get('meta_data')
-			if meta_data and not self.is_json(meta_data):
+			if meta_data and not is_json(meta_data):
 				raise ValueError("meta_data is not in JSON form")
 
 			subscribed=False
@@ -922,7 +836,7 @@ class UserViews(View):
 
 		try:
 			params=request.GET.dict()
-			self.validate_schema(params,['email_id'])
+			validate_schema(params,['email_id'])
 			if not User.objects.filter(email_id=params.get('email_id')).exists():
 				raise ValidationError("User with this email id doesnot exist")
 			user_obj=User.objects.get(email_id=params.get('email_id'))
@@ -943,13 +857,13 @@ class UserViews(View):
 	def put (self, request, *args, **kwargs):
 		try:
 			params=request.GET.dict()
-			self.validate_schema(params,['email_id'])
+			validate_schema(params,['email_id'])
 			if not User.objects.filter(email_id=params.get('email_id')).exists():
 				raise ValidationError("User with this email id doesnot exist")
 			user_obj=User.objects.get(email_id=params.get('email_id'))
 			mobile=params.get('mobile')
 			meta_data = params.get('meta_data')
-			if meta_data and not self.is_json(meta_data):
+			if meta_data and not is_json(meta_data):
 				raise ValueError("meta_data is not in JSON form")
 
 			subscribed=False
@@ -991,22 +905,11 @@ class UserViews(View):
 class HardCopyViews(View):
 	def __init__(self):
 		self.response=init_response()
-	
-	def validate_schema(self, params, required_key=['name']):
-
-		keys = params.keys()
-		key_len = 0
-		for key in required_key:
-			if key in keys:
-				key_len += 1
-		if len(required_key) != key_len:
-			raise ValidationError("Invalid data")
-
 
 	def get(self, request, *args, **kwargs):
 		try:
 			params=request.GET.dict()
-			self.validate_schema(params,['hard_copy_id'])
+			validate_schema(params,['hard_copy_id'])
 			hard_copy_id=params.get('hard_copy_id')
 			if HardCopy.objects.filter(hard_copy_id=hard_copy_id).exists():
 					self.response['res_data']=HardCopy.objects.get(hard_copy_id=hard_copy_id).as_dict()
@@ -1030,7 +933,7 @@ class HardCopyViews(View):
 		try:
 			#import pdb; pdb.set_trace()
 			params=request.POST.dict()
-			self.validate_schema(params,['book_id'])
+			validate_schema(params,['book_id'])
 			book_id = params.get('book_id')
 			if not Book.objects.filter(book_id=book_id).exists():
 				raise ObjectDoesNotExist("Book with this"+str(book_id)+"does not exist")
@@ -1067,7 +970,7 @@ class HardCopyViews(View):
 	def delete(self, request, *args, **kwargs):
 		try:
 			params=request.GET.dict()
-			self.validate_schema(params,['hard_copy_id'])
+			validate_schema(params,['hard_copy_id'])
 			hard_copy_id=params.get('hard_copy_id')
 			if not HardCopy.objects.filter(hard_copy_id=hard_copy_id).exists():
 				raise ObjectDoesNotExist("Requested HardCopy does not exist")
@@ -1093,7 +996,7 @@ class HardCopyViews(View):
 	def put (self, request, *args, **kwargs):
 		try:
 			params=request.GET.dict()
-			self.validate_schema(params,['hard_copy_id'])
+			validate_schema(params,['hard_copy_id'])
 			hard_copy_id=params.get('hard_copy_id')
 			if not HardCopy.objects.filter(hard_copy_id=hard_copy_id).exists():
 				raise ObjectDoesNotExist("Requested HardCopy does not exist")
