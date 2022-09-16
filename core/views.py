@@ -1,16 +1,9 @@
-from cProfile import label
-from re import U
-from turtle import pd
-from django.shortcuts import render, redirect
 from .models import *
-from django.contrib import messages
-from django.http import HttpResponse
 from django.views import View
 from .responses import *
 from .exceptions import *
 from django.core.exceptions import *
 from .constants import *
-import json
 from .utils import *
 
 class LanguageViews(View):
@@ -29,12 +22,12 @@ class LanguageViews(View):
 				except:
 					raise ObjectDoesNotExist("Requested language does not exist")
 			else:
-				res={}
+				res=[]
 				lan=Language.objects.all()
 				for index in range(offset,limit):
 					if index >= len(lan):
 						break
-					res[str(lan[index].language_id)]=lan[index].as_dict()	
+					res.append(lan[index].as_dict())	
 				self.response['res_data']=res
 			return send_200(self.response)
 		
@@ -60,7 +53,7 @@ class LanguageViews(View):
 			self.response['res_str'] = "Language Successfully Created"
 			return send_201(self.response)
 
-		except (ValidationError,ObjectDoesNotExist) as ex:
+		except (ValidationError,ObjectDoesNotExist,ObjectAlreadyExist) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
 			self.response['Error Msg']="Something is Wrong"
@@ -90,10 +83,9 @@ class LanguageViews(View):
 	def put (self, request, *args, **kwargs):
 		try:
 			params=request.GET.dict()
-			validate_schema(params) 
-			name = params.get('name').lower()
+			validate_schema(params)
 			try:
-				language_obj = Language.objects.get(name=name)	
+				language_obj = Language.objects.get(name=params.get('name').lower())	
 				script = params.get('script')
 				about = params.get('about')
 				language_obj.script=script
@@ -128,11 +120,11 @@ class AuthorViews(View):
 					raise ObjectDoesNotExist("Requested Author does not exist")
 			else:
 				ath=Author.objects.all()
-				res={}
+				res=[]
 				for index in range(offset,limit):
 					if index >= len(ath):
 						break
-					res[str(ath[index].author_id)]=ath[index].as_dict()
+					res.append(ath[index].as_dict())
 				self.response['res_data']=res
 			return send_200(self.response)
 		
@@ -151,7 +143,7 @@ class AuthorViews(View):
 			meta_data = params.get('meta_data')
 
 			if Author.objects.filter(name=name).exists():
-				raise ObjectAlreadyExist("Language with this name already exist")
+				raise ObjectAlreadyExist("Author with this name already exist")
 
 			if meta_data and not is_json(meta_data):
 				raise ValueError("meta-data is not in JSON form")
@@ -163,7 +155,7 @@ class AuthorViews(View):
 			self.response['res_str'] = "Author Successfully Created"
 			return send_201(self.response)
 
-		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
+		except (ValidationError,ObjectDoesNotExist,ValueError,ObjectAlreadyExist) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
 			self.response['Error Msg']="Something is Wrong"
@@ -174,7 +166,6 @@ class AuthorViews(View):
 			params=request.GET.dict()
 			validate_schema(params)
 			name = params.get('name').lower()
-
 			try:
 				auth_obj=Author.objects.get(name=name)
 				res=auth_obj.as_dict()
@@ -183,7 +174,6 @@ class AuthorViews(View):
 				self.response['res_data'] = res
 				self.response['res_str'] = "Author Deleted Successfully"
 				return send_201(self.response)
-
 			except:
 				raise ObjectDoesNotExist("Author not found")
 			
@@ -237,13 +227,12 @@ class PublisherViews(View):
 					raise ObjectDoesNotExist("Requested Publisher does not exist")
 			else:
 				pub=Publisher.objects.all()
-				res={}
+				res=[]
 				for index in range(offset,limit):
 					if index >= len(pub):
 						break
-					res[str(pub[index].publisher_id)]=pub[index].as_dict()
+					res.append(pub[index].as_dict())
 				self.response['res_data']=res
-
 			return send_200(self.response)
 		
 		except (ValidationError,ObjectDoesNotExist,ValueError,ObjectAlreadyExist) as ex:
@@ -260,7 +249,7 @@ class PublisherViews(View):
 			meta_data = params.get('meta_data')
 
 			if Publisher.objects.filter(name=name).exists():
-				raise ObjectAlreadyExist("Language with this name already exist")
+				raise ObjectAlreadyExist("Publisher with this name already exist")
 
 			if meta_data and not is_json(meta_data):
 				raise ValueError("meta-data is not in JSON form")
@@ -306,7 +295,7 @@ class PublisherViews(View):
 			validate_schema(params)
 			name = params.get('name').lower()
 			if not Publisher.objects.filter(name=name).exists():
-				raise ObjectDoesNotExist("Requested author does not exist")
+				raise ObjectDoesNotExist("Requested Publisher does not exist")
 			meta_data = params.get('meta_data')
 			if meta_data and not is_json(meta_data):
 				raise ValueError("meta-data is not in JSON form")
@@ -346,11 +335,11 @@ class BookViews(View):
 					raise ObjectDoesNotExist("Requested BOOK does not exist")
 			else:
 				ath=Book.objects.all()
-				res={}
+				res=[]
 				for index in range(offset,limit):
 					if index >= len(ath):
 						break
-					res[str(ath[index].book_id)]=ath[index].as_dict()
+					res.append(ath[index].as_dict())
 				self.response['res_data']=res
 			return send_200(self.response)
 
@@ -366,13 +355,10 @@ class BookViews(View):
 			validate_schema(params,['name','author','publisher','language'])
 			name = params.get('name').lower()
 
-			author_name = params.get('author')
-			author_list=[auth.strip() for auth in author_name.split(',')]
+			author_list=[auth.strip() for auth in params.get('author').split(',') if auth != '']
 			if(len(author_list)==0):
 				raise ValidationError("Need at least one author")	
-
-			language=params.get('language')
-			lan_list=[_lang.strip() for _lang in language.split(',')]
+			lan_list=[_lang.strip() for _lang in params.get('language').split(',') if _lang != '']
 			if(len(lan_list)==0):
 				raise ValidationError("Need at least one language")
 
@@ -387,23 +373,13 @@ class BookViews(View):
 
 			book_type = None
 			book_param=params.get('book_type')
-			if book_param and book_param.lower()=='true':
-				book_type=True
-			elif book_param and book_param.lower()=='false':
-				book_type=False
+			if book_param and (book_param.lower()=='true' or book_param.lower()=='false') :
+				book_type=eval(book_param.capitalize())
 
 			book_obj = Book.objects.create(name=name,publisher=publisher_obj,book_type=book_type,extra_details=extra_details)
 			book_obj.status='A'
-			for ath in author_list:
-				if not Author.objects.filter(name=ath.lower()).exists():
-					raise ObjectDoesNotExist("Author with " +ath+ " name does not exist")
-				else:
-					book_obj.author.add(Author.objects.get(name=ath.lower()))
-			for lan in lan_list:
-				if not Language.objects.filter(name=lan.lower()).exists():
-					raise ObjectDoesNotExist("Language with " +lan+ " name does not exist")
-				else:
-					book_obj.language.add(Language.objects.get(name=lan.lower()))
+			book_obj.author.add(*(Author.objects.get_queryset_objects(author_list)))
+			book_obj.language.add(*(Language.objects.get_queryset_objects(lan_list)))
 			book_obj.save()
 			self.response['res_data'] = book_obj.as_dict()
 			self.response['res_str'] = "Book Successfully Created"
@@ -446,15 +422,9 @@ class BookViews(View):
 				book_obj=Book.objects.get(book_id=book_id)
 			except:
 				raise ObjectDoesNotExist("Requested BOOK does not exist")
-			author_name = params.get('author') 
-			author_list=[]
-			if author_name:
-				author_list=[auth.strip() for auth in author_name.split(',')]
-			
-			language=params.get('language')
-			lan_list=[]
-			if language:
-				lan_list=[_lang.strip() for _lang in language.split(',')]
+	
+			author_list=[auth.strip() for auth in params.get('author') .split(',') if auth != '']
+			lan_list=[_lang.strip() for _lang in params.get('language').split(',') if _lang != '']
 
 			extra_details=book_obj.extra_details 
 			extra_param = params.get('extra_details')
@@ -465,24 +435,13 @@ class BookViews(View):
 
 			book_type = book_obj.book_type 
 			book_param=params.get('book_type')
-			if book_param and book_param.lower()=='true':
-				book_type=True
-			elif book_param and book_param.lower()=='false':
-				book_type=False
+			if book_param and (book_param.lower()=='true' or book_param.lower()=='false') :
+				book_type=eval(book_param.capitalize())
 
 			book_obj.book_type=book_type
 			book_obj.extra_details=extra_details
-
-			for ath in author_list:
-				if not Author.objects.filter(name=ath.lower()).exists():
-					raise ObjectDoesNotExist("Author with " +ath+ " name does not exist")
-				else:
-					book_obj.author.add(Author.objects.get(name=ath.lower()))
-			for lan in lan_list:
-				if not Language.objects.filter(name=lan.lower()).exists():
-					raise ObjectDoesNotExist("Language with " +lan+ " name does not exist")
-				else:
-					book_obj.language.add(Language.objects.get(name=lan.lower()))
+			book_obj.author.add(*(Author.objects.get_queryset_objects(author_list)))
+			book_obj.language.add(*(Language.objects.get_queryset_objects(lan_list)))
 			book_obj.save()
 			self.response['res_data'] = book_obj.as_dict()
 			self.response['res_str'] = "Book Updated Successfully"
@@ -510,11 +469,11 @@ class EBookViews(View):
 					raise ObjectDoesNotExist("Requested Ebook does not exist")
 			else:
 				ebooks=EBook.objects.all()
-				res={}
+				res=[]
 				for index in range(offset,limit):
 					if index >= len(ebooks):
 						break
-					res[str(ebooks[index].ebook_id)]=ebooks[index].as_dict()
+					res.append(ebooks[index].as_dict())
 				self.response['res_data']=res
 			return send_201(self.response)
 
@@ -616,6 +575,7 @@ class UserViews(View):
 			last_name = params.get('last_name').lower()
 			mobile=params.get('mobile')
 			email_id=params.get('email_id')
+
 			regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
 			if not re.fullmatch(regex, email_id):
 				raise ValidationError("Email Id is not correct")
@@ -631,20 +591,11 @@ class UserViews(View):
 			if subscription and subscription.lower()=='true':
 				subscribed=True
 
-			favourited = params.get('favourited') #can be empty
-			fav_book=[]
-			if favourited:
-				fav_book=[book.strip() for book in favourited.split(',')]
+			fav_book=[book.strip() for book in params.get('favourited').split(',') if book != '']
 		
 			user_obj = User.objects.create(first_name=first_name,middle_name=middle_name,last_name=last_name,mobile=mobile,email_id=email_id,meta_data=meta_data,subscription=subscribed)
 			user_obj.status='A'
-
-			for book in fav_book:
-				if not Book.objects.filter(book_id=book).exists():
-					raise ObjectDoesNotExist("Book with ID: " +book+ " does not exist")
-				else:
-					user_obj.favourited.add(Book.objects.get(book_id=book))
-			
+			user_obj.favourited.add(*(Book.objects.get_queryset_objects(fav_book)))
 			user_obj.save()
 			self.response['res_data'] = user_obj.as_dict()
 			self.response['res_str'] = "User Successfully Created"
@@ -689,7 +640,7 @@ class UserViews(View):
 			if meta_data and not is_json(meta_data):
 				raise ValueError("meta_data is not in JSON form")
 
-			subscribed=False
+			subscribed=user_obj.subscription
 			subscription=params.get('subscription')
 			if subscription and subscription.lower()=='true':
 				subscribed=True
@@ -726,7 +677,7 @@ class HardCopyViews(View):
 			validate_schema(params,['hard_copy_id'])
 			hard_copy_id=params.get('hard_copy_id')
 			try:
-					self.response['res_data']=HardCopy.objects.get(hard_copy_id=hard_copy_id).as_dict()
+				self.response['res_data']=HardCopy.objects.get(hard_copy_id=hard_copy_id).as_dict()
 			except:
 				raise ObjectDoesNotExist("Requested HardCopy does not exist")
 			return send_201(self.response)
@@ -753,7 +704,7 @@ class HardCopyViews(View):
 			
 			lent_to=params.get('lent_to')
 			user_obj=None
-			if lent_to and User.objects.filter(email_id=lent_to).exists():
+			if lent_to and not User.objects.filter(email_id=lent_to).exists():
 				user_obj=User.objects.get(email_id=lent_to)
 
 			hardcopy_obj = HardCopy.objects.create( book_id=book_obj, is_lent=is_lent,lent_to=user_obj)
@@ -798,12 +749,13 @@ class HardCopyViews(View):
 			except:
 				raise ObjectDoesNotExist("Requested HardCopy does not exist")
 
-			is_lent=False
+			is_lent=hardcopy_obj.is_lent
 			lent=params.get('is_lent')
-			if lent and lent.lower()=='true':
-				is_lent=True
+			if lent and (lent.lower()=='true' or lent.lower()=='false') :
+				is_lent=eval(lent.capitalize())
+				
 			lent_to=params.get('lent_to')
-			user_obj=None
+			user_obj=hardcopy_obj.lent_to
 			if lent_to and not User.objects.filter(email_id=lent_to).exists():
 				raise ObjectDoesNotExist("User with this "+str(lent_to)+" does not exist")
 			elif lent_to:

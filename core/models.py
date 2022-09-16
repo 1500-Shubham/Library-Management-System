@@ -1,7 +1,7 @@
-from email.policy import default
 from django.db import models
-from django.db.models import Model
 import uuid
+from .exceptions import *
+from django.core.exceptions import *
 #import pdb; pdb.set_trace()
 
 class BaseModel(models.Model):
@@ -16,6 +16,18 @@ class BaseModel(models.Model):
 
 	class Meta:
 		abstract = True
+
+class LanguageManager(models.Manager):
+	#returns query set of objects of languages that matches with languages_list values
+	def get_queryset_objects(self,lan_list):
+		query_obj=[]
+		for lan in lan_list:
+			try:
+				query_obj.append(Language.objects.get(name=lan.lower()))
+			except:
+				raise ObjectDoesNotExist("Language with " +lan+ " name does not exist")
+				
+		return query_obj
 
 class Language(BaseModel):
 	#readonly_fields=('language_id')
@@ -34,6 +46,19 @@ class Language(BaseModel):
 				'scripts':self.script,
 				'about':self.about,
 			}
+	objects = LanguageManager()
+
+class AuthorManager(models.Manager):
+	#returns query set of objects of author that matches with author_list values
+	def get_queryset_objects(self,author_list):
+		query_obj=[]
+		for ath in author_list:
+			try:
+				print("hiii")
+				query_obj.append(Author.objects.get(name=ath.lower()))
+			except:
+				raise ObjectDoesNotExist("Author with " +ath+ " name does not exist")
+		return query_obj
 
 class Author(BaseModel):
 	readonly_fields=('author_id')
@@ -52,6 +77,7 @@ class Author(BaseModel):
 		'description':self.description,
 		'meta_data':self.meta_data,
 		}
+	objects = AuthorManager()
 	
 class Publisher(BaseModel):
 	readonly_fields=('publisher_id')
@@ -68,6 +94,16 @@ class Publisher(BaseModel):
 		'name':self.name,
 		'meta_data':self.meta_data,
 		}
+
+class BookManager(models.Manager):
+	def get_queryset_objects(self,book_list):
+		query_obj=[]
+		for book in book_list:
+			try:
+				query_obj.append(Book.objects.get(book_id=book))
+			except:
+				raise ObjectDoesNotExist("Book with ID: " +book+ " does not exist")
+		return query_obj
 
 class Book(BaseModel):
 	BOOK_TYPE = (
@@ -96,6 +132,7 @@ class Book(BaseModel):
 		'extra_details':self.extra_details,
 		'book_type':self.book_type,
 		}
+	objects = BookManager()
 
 class EBook(models.Model):
 	readonly_fields=('ebook_id')

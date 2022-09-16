@@ -8,7 +8,6 @@ def validate_schema(params, required_key=['name'],msg=""):
         if key in keys:
             key_len += 1
     if len(required_key) != key_len:
-        print("po")
         raise ValidationError("Invalid data"+msg)
 
 def is_json(myjson):
