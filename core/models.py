@@ -54,6 +54,7 @@ class AuthorManager(models.Manager):
 		query_obj=[]
 		for ath in author_list:
 			try:
+				print("hiii")
 				query_obj.append(Author.objects.get(name=ath.lower()))
 			except:
 				raise ObjectDoesNotExist("Author with " +ath+ " name does not exist")
@@ -95,7 +96,6 @@ class Publisher(BaseModel):
 		}
 
 class BookManager(models.Manager):
-	#returns query set of objects of author that matches with author_list values
 	def get_queryset_objects(self,book_list):
 		query_obj=[]
 		for book in book_list:
