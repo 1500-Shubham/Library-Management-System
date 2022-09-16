@@ -53,7 +53,7 @@ class LanguageViews(View):
 			self.response['res_str'] = "Language Successfully Created"
 			return send_201(self.response)
 
-		except (ValidationError,ObjectDoesNotExist) as ex:
+		except (ValidationError,ObjectDoesNotExist,ObjectAlreadyExist) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
 			self.response['Error Msg']="Something is Wrong"
@@ -143,7 +143,7 @@ class AuthorViews(View):
 			meta_data = params.get('meta_data')
 
 			if Author.objects.filter(name=name).exists():
-				raise ObjectAlreadyExist("Language with this name already exist")
+				raise ObjectAlreadyExist("Author with this name already exist")
 
 			if meta_data and not is_json(meta_data):
 				raise ValueError("meta-data is not in JSON form")
@@ -155,7 +155,7 @@ class AuthorViews(View):
 			self.response['res_str'] = "Author Successfully Created"
 			return send_201(self.response)
 
-		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
+		except (ValidationError,ObjectDoesNotExist,ValueError,ObjectAlreadyExist) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
 			self.response['Error Msg']="Something is Wrong"
@@ -249,7 +249,7 @@ class PublisherViews(View):
 			meta_data = params.get('meta_data')
 
 			if Publisher.objects.filter(name=name).exists():
-				raise ObjectAlreadyExist("Language with this name already exist")
+				raise ObjectAlreadyExist("Publisher with this name already exist")
 
 			if meta_data and not is_json(meta_data):
 				raise ValueError("meta-data is not in JSON form")
@@ -295,7 +295,7 @@ class PublisherViews(View):
 			validate_schema(params)
 			name = params.get('name').lower()
 			if not Publisher.objects.filter(name=name).exists():
-				raise ObjectDoesNotExist("Requested author does not exist")
+				raise ObjectDoesNotExist("Requested Publisher does not exist")
 			meta_data = params.get('meta_data')
 			if meta_data and not is_json(meta_data):
 				raise ValueError("meta-data is not in JSON form")
@@ -640,7 +640,7 @@ class UserViews(View):
 			if meta_data and not is_json(meta_data):
 				raise ValueError("meta_data is not in JSON form")
 
-			subscribed=False
+			subscribed=user_obj.subscription
 			subscription=params.get('subscription')
 			if subscription and subscription.lower()=='true':
 				subscribed=True
@@ -704,7 +704,7 @@ class HardCopyViews(View):
 			
 			lent_to=params.get('lent_to')
 			user_obj=None
-			if lent_to and User.objects.filter(email_id=lent_to).exists():
+			if lent_to and not User.objects.filter(email_id=lent_to).exists():
 				user_obj=User.objects.get(email_id=lent_to)
 
 			hardcopy_obj = HardCopy.objects.create( book_id=book_obj, is_lent=is_lent,lent_to=user_obj)
@@ -749,12 +749,13 @@ class HardCopyViews(View):
 			except:
 				raise ObjectDoesNotExist("Requested HardCopy does not exist")
 
-			is_lent=False
+			is_lent=hardcopy_obj.is_lent
 			lent=params.get('is_lent')
-			if lent and lent.lower()=='true':
-				is_lent=True
+			if lent and (lent.lower()=='true' or lent.lower()=='false') :
+				is_lent=eval(lent.capitalize())
+				
 			lent_to=params.get('lent_to')
-			user_obj=None
+			user_obj=hardcopy_obj.lent_to
 			if lent_to and not User.objects.filter(email_id=lent_to).exists():
 				raise ObjectDoesNotExist("User with this "+str(lent_to)+" does not exist")
 			elif lent_to:
