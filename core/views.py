@@ -366,13 +366,10 @@ class BookViews(View):
 			validate_schema(params,['name','author','publisher','language'])
 			name = params.get('name').lower()
 
-			author_name = params.get('author')
-			author_list=[auth.strip() for auth in author_name.split(',')]
+			author_list=[auth.strip() for auth in params.get('author').split(',') if auth != '']
 			if(len(author_list)==0):
 				raise ValidationError("Need at least one author")	
-
-			language=params.get('language')
-			lan_list=[_lang.strip() for _lang in language.split(',')]
+			lan_list=[_lang.strip() for _lang in params.get('language').split(',') if _lang != '']
 			if(len(lan_list)==0):
 				raise ValidationError("Need at least one language")
 
@@ -394,16 +391,8 @@ class BookViews(View):
 
 			book_obj = Book.objects.create(name=name,publisher=publisher_obj,book_type=book_type,extra_details=extra_details)
 			book_obj.status='A'
-			for ath in author_list:
-				if not Author.objects.filter(name=ath.lower()).exists():
-					raise ObjectDoesNotExist("Author with " +ath+ " name does not exist")
-				else:
-					book_obj.author.add(Author.objects.get(name=ath.lower()))
-			for lan in lan_list:
-				if not Language.objects.filter(name=lan.lower()).exists():
-					raise ObjectDoesNotExist("Language with " +lan+ " name does not exist")
-				else:
-					book_obj.language.add(Language.objects.get(name=lan.lower()))
+			book_obj.author.add(*(Author.objects.get_queryset_objects(author_list)))
+			book_obj.language.add(*(Language.objects.get_queryset_objects(lan_list)))
 			book_obj.save()
 			self.response['res_data'] = book_obj.as_dict()
 			self.response['res_str'] = "Book Successfully Created"
@@ -446,15 +435,9 @@ class BookViews(View):
 				book_obj=Book.objects.get(book_id=book_id)
 			except:
 				raise ObjectDoesNotExist("Requested BOOK does not exist")
-			author_name = params.get('author') 
-			author_list=[]
-			if author_name:
-				author_list=[auth.strip() for auth in author_name.split(',')]
-			
-			language=params.get('language')
-			lan_list=[]
-			if language:
-				lan_list=[_lang.strip() for _lang in language.split(',')]
+	
+			author_list=[auth.strip() for auth in params.get('author') .split(',') if auth != '']
+			lan_list=[_lang.strip() for _lang in params.get('language').split(',') if _lang != '']
 
 			extra_details=book_obj.extra_details 
 			extra_param = params.get('extra_details')
@@ -472,17 +455,8 @@ class BookViews(View):
 
 			book_obj.book_type=book_type
 			book_obj.extra_details=extra_details
-
-			for ath in author_list:
-				if not Author.objects.filter(name=ath.lower()).exists():
-					raise ObjectDoesNotExist("Author with " +ath+ " name does not exist")
-				else:
-					book_obj.author.add(Author.objects.get(name=ath.lower()))
-			for lan in lan_list:
-				if not Language.objects.filter(name=lan.lower()).exists():
-					raise ObjectDoesNotExist("Language with " +lan+ " name does not exist")
-				else:
-					book_obj.language.add(Language.objects.get(name=lan.lower()))
+			book_obj.author.add(*(Author.objects.get_queryset_objects(author_list)))
+			book_obj.language.add(*(Language.objects.get_queryset_objects(lan_list)))
 			book_obj.save()
 			self.response['res_data'] = book_obj.as_dict()
 			self.response['res_str'] = "Book Updated Successfully"
@@ -631,20 +605,11 @@ class UserViews(View):
 			if subscription and subscription.lower()=='true':
 				subscribed=True
 
-			favourited = params.get('favourited') #can be empty
-			fav_book=[]
-			if favourited:
-				fav_book=[book.strip() for book in favourited.split(',')]
+			fav_book=[book.strip() for book in params.get('favourited').split(',') if book != '']
 		
 			user_obj = User.objects.create(first_name=first_name,middle_name=middle_name,last_name=last_name,mobile=mobile,email_id=email_id,meta_data=meta_data,subscription=subscribed)
 			user_obj.status='A'
-
-			for book in fav_book:
-				if not Book.objects.filter(book_id=book).exists():
-					raise ObjectDoesNotExist("Book with ID: " +book+ " does not exist")
-				else:
-					user_obj.favourited.add(Book.objects.get(book_id=book))
-			
+			user_obj.favourited.add(*(Book.objects.get_queryset_objects(fav_book)))
 			user_obj.save()
 			self.response['res_data'] = user_obj.as_dict()
 			self.response['res_str'] = "User Successfully Created"
