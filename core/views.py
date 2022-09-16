@@ -1,16 +1,9 @@
-from cProfile import label
-from re import U
-from turtle import pd
-from django.shortcuts import render, redirect
 from .models import *
-from django.contrib import messages
-from django.http import HttpResponse
 from django.views import View
 from .responses import *
 from .exceptions import *
 from django.core.exceptions import *
 from .constants import *
-import json
 from .utils import *
 
 class LanguageViews(View):
@@ -127,11 +120,11 @@ class AuthorViews(View):
 					raise ObjectDoesNotExist("Requested Author does not exist")
 			else:
 				ath=Author.objects.all()
-				res={}
+				res=[]
 				for index in range(offset,limit):
 					if index >= len(ath):
 						break
-					res[str(ath[index].author_id)]=ath[index].as_dict()
+					res.append(ath[index].as_dict())
 				self.response['res_data']=res
 			return send_200(self.response)
 		
@@ -173,7 +166,6 @@ class AuthorViews(View):
 			params=request.GET.dict()
 			validate_schema(params)
 			name = params.get('name').lower()
-
 			try:
 				auth_obj=Author.objects.get(name=name)
 				res=auth_obj.as_dict()
@@ -182,7 +174,6 @@ class AuthorViews(View):
 				self.response['res_data'] = res
 				self.response['res_str'] = "Author Deleted Successfully"
 				return send_201(self.response)
-
 			except:
 				raise ObjectDoesNotExist("Author not found")
 			
@@ -236,13 +227,12 @@ class PublisherViews(View):
 					raise ObjectDoesNotExist("Requested Publisher does not exist")
 			else:
 				pub=Publisher.objects.all()
-				res={}
+				res=[]
 				for index in range(offset,limit):
 					if index >= len(pub):
 						break
-					res[str(pub[index].publisher_id)]=pub[index].as_dict()
+					res.append(pub[index].as_dict())
 				self.response['res_data']=res
-
 			return send_200(self.response)
 		
 		except (ValidationError,ObjectDoesNotExist,ValueError,ObjectAlreadyExist) as ex:
@@ -345,11 +335,11 @@ class BookViews(View):
 					raise ObjectDoesNotExist("Requested BOOK does not exist")
 			else:
 				ath=Book.objects.all()
-				res={}
+				res=[]
 				for index in range(offset,limit):
 					if index >= len(ath):
 						break
-					res[str(ath[index].book_id)]=ath[index].as_dict()
+					res.append(ath[index].as_dict())
 				self.response['res_data']=res
 			return send_200(self.response)
 
@@ -380,7 +370,7 @@ class BookViews(View):
 			extra_details = params.get('extra_details')
 			if extra_details and not is_json(extra_details):
 				raise ValueError("extra_details is not in JSON form")
-			
+
 			book_type = None
 			book_param=params.get('book_type')
 			if book_param and (book_param.lower()=='true' or book_param.lower()=='false') :
@@ -479,11 +469,11 @@ class EBookViews(View):
 					raise ObjectDoesNotExist("Requested Ebook does not exist")
 			else:
 				ebooks=EBook.objects.all()
-				res={}
+				res=[]
 				for index in range(offset,limit):
 					if index >= len(ebooks):
 						break
-					res[str(ebooks[index].ebook_id)]=ebooks[index].as_dict()
+					res.append(ebooks[index].as_dict())
 				self.response['res_data']=res
 			return send_201(self.response)
 
@@ -585,6 +575,7 @@ class UserViews(View):
 			last_name = params.get('last_name').lower()
 			mobile=params.get('mobile')
 			email_id=params.get('email_id')
+
 			regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
 			if not re.fullmatch(regex, email_id):
 				raise ValidationError("Email Id is not correct")
@@ -686,7 +677,7 @@ class HardCopyViews(View):
 			validate_schema(params,['hard_copy_id'])
 			hard_copy_id=params.get('hard_copy_id')
 			try:
-					self.response['res_data']=HardCopy.objects.get(hard_copy_id=hard_copy_id).as_dict()
+				self.response['res_data']=HardCopy.objects.get(hard_copy_id=hard_copy_id).as_dict()
 			except:
 				raise ObjectDoesNotExist("Requested HardCopy does not exist")
 			return send_201(self.response)

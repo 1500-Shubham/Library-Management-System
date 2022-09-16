@@ -1,6 +1,4 @@
-from email.policy import default
 from django.db import models
-from django.db.models import Model
 import uuid
 from .exceptions import *
 from django.core.exceptions import *
