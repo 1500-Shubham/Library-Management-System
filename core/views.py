@@ -29,12 +29,12 @@ class LanguageViews(View):
 				except:
 					raise ObjectDoesNotExist("Requested language does not exist")
 			else:
-				res={}
+				res=[]
 				lan=Language.objects.all()
 				for index in range(offset,limit):
 					if index >= len(lan):
 						break
-					res[str(lan[index].language_id)]=lan[index].as_dict()	
+					res.append(lan[index].as_dict())	
 				self.response['res_data']=res
 			return send_200(self.response)
 		
@@ -90,10 +90,9 @@ class LanguageViews(View):
 	def put (self, request, *args, **kwargs):
 		try:
 			params=request.GET.dict()
-			validate_schema(params) 
-			name = params.get('name').lower()
+			validate_schema(params)
 			try:
-				language_obj = Language.objects.get(name=name)	
+				language_obj = Language.objects.get(name=params.get('name').lower())	
 				script = params.get('script')
 				about = params.get('about')
 				language_obj.script=script
@@ -381,13 +380,11 @@ class BookViews(View):
 			extra_details = params.get('extra_details')
 			if extra_details and not is_json(extra_details):
 				raise ValueError("extra_details is not in JSON form")
-
+			
 			book_type = None
 			book_param=params.get('book_type')
-			if book_param and book_param.lower()=='true':
-				book_type=True
-			elif book_param and book_param.lower()=='false':
-				book_type=False
+			if book_param and (book_param.lower()=='true' or book_param.lower()=='false') :
+				book_type=eval(book_param.capitalize())
 
 			book_obj = Book.objects.create(name=name,publisher=publisher_obj,book_type=book_type,extra_details=extra_details)
 			book_obj.status='A'
@@ -448,10 +445,8 @@ class BookViews(View):
 
 			book_type = book_obj.book_type 
 			book_param=params.get('book_type')
-			if book_param and book_param.lower()=='true':
-				book_type=True
-			elif book_param and book_param.lower()=='false':
-				book_type=False
+			if book_param and (book_param.lower()=='true' or book_param.lower()=='false') :
+				book_type=eval(book_param.capitalize())
 
 			book_obj.book_type=book_type
 			book_obj.extra_details=extra_details

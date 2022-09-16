@@ -24,10 +24,11 @@ class LanguageManager(models.Manager):
 	def get_queryset_objects(self,lan_list):
 		query_obj=[]
 		for lan in lan_list:
-				if not Language.objects.filter(name=lan.lower()).exists():
-					raise ObjectDoesNotExist("Language with " +lan+ " name does not exist")
-				else:
-					query_obj.append(Language.objects.get(name=lan.lower()))
+			try:
+				query_obj.append(Language.objects.get(name=lan.lower()))
+			except:
+				raise ObjectDoesNotExist("Language with " +lan+ " name does not exist")
+				
 		return query_obj
 
 class Language(BaseModel):
@@ -49,16 +50,15 @@ class Language(BaseModel):
 			}
 	objects = LanguageManager()
 
-
 class AuthorManager(models.Manager):
 	#returns query set of objects of author that matches with author_list values
 	def get_queryset_objects(self,author_list):
 		query_obj=[]
 		for ath in author_list:
-				if not Author.objects.filter(name=ath.lower()).exists():
-					raise ObjectDoesNotExist("Author with " +ath+ " name does not exist")
-				else:
-					query_obj.append(Author.objects.get(name=ath.lower()))
+			try:
+				query_obj.append(Author.objects.get(name=ath.lower()))
+			except:
+				raise ObjectDoesNotExist("Author with " +ath+ " name does not exist")
 		return query_obj
 
 class Author(BaseModel):
@@ -101,10 +101,10 @@ class BookManager(models.Manager):
 	def get_queryset_objects(self,book_list):
 		query_obj=[]
 		for book in book_list:
-				if not Book.objects.filter(book_id=book).exists():
-					raise ObjectDoesNotExist("Book with ID: " +book+ " does not exist")
-				else:
-					query_obj.append(Book.objects.get(book_id=book))
+			try:
+				query_obj.append(Book.objects.get(book_id=book))
+			except:
+				raise ObjectDoesNotExist("Book with ID: " +book+ " does not exist")
 		return query_obj
 
 class Book(BaseModel):
