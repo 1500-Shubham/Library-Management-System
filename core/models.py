@@ -2,6 +2,7 @@ from django.db import models
 import uuid
 from .exceptions import *
 from django.core.exceptions import *
+from .managers import (LanguageManager, AuthorManager, BookManager)
 #import pdb; pdb.set_trace()
 
 class BaseModel(models.Model):
@@ -23,7 +24,7 @@ class LanguageManager(models.Manager):
 		query_obj=[]
 		for lan in lan_list:
 			try:
-				query_obj.append(Language.objects.get(name=lan.lower()))
+				query_obj.append(Language.objects.filter(name=lan.lower()))
 			except:
 				raise ObjectDoesNotExist("Language with " +lan+ " name does not exist")
 				
@@ -35,7 +36,7 @@ class Language(BaseModel):
 	name = models.CharField(max_length=100,unique=True)
 	script = models.CharField(max_length=100,null=True,blank=True)
 	about = models.CharField(max_length=100,null=True,blank=True)
-
+	objects = LanguageManager()
 	def __str__(self):
 		return self.name
 
@@ -46,19 +47,18 @@ class Language(BaseModel):
 				'scripts':self.script,
 				'about':self.about,
 			}
-	objects = LanguageManager()
-
-class AuthorManager(models.Manager):
-	#returns query set of objects of author that matches with author_list values
-	def get_queryset_objects(self,author_list):
-		query_obj=[]
-		for ath in author_list:
-			try:
-				print("hiii")
-				query_obj.append(Author.objects.get(name=ath.lower()))
-			except:
-				raise ObjectDoesNotExist("Author with " +ath+ " name does not exist")
-		return query_obj
+	
+# class AuthorManager(models.Manager):
+# 	#returns query set of objects of author that matches with author_list values
+# 	def get_queryset_objects(self,author_list):
+# 		query_obj=[]
+# 		for ath in author_list:
+# 			try:
+# 				print("hiii")
+# 				query_obj.append(Author.objects.get(name=ath.lower()))
+# 			except:
+# 				raise ObjectDoesNotExist("Author with " +ath+ " name does not exist")
+# 		return query_obj
 
 class Author(BaseModel):
 	readonly_fields=('author_id')
@@ -95,15 +95,15 @@ class Publisher(BaseModel):
 		'meta_data':self.meta_data,
 		}
 
-class BookManager(models.Manager):
-	def get_queryset_objects(self,book_list):
-		query_obj=[]
-		for book in book_list:
-			try:
-				query_obj.append(Book.objects.get(book_id=book))
-			except:
-				raise ObjectDoesNotExist("Book with ID: " +book+ " does not exist")
-		return query_obj
+# class BookManager(models.Manager):
+# 	def get_queryset_objects(self,book_list):
+# 		query_obj=[]
+# 		for book in book_list:
+# 			try:
+# 				query_obj.append(Book.objects.get(book_id=book))
+# 			except:
+# 				raise ObjectDoesNotExist("Book with ID: " +book+ " does not exist")
+# 		return query_obj
 
 class Book(BaseModel):
 	BOOK_TYPE = (
