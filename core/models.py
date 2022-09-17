@@ -4,7 +4,7 @@ from .exceptions import *
 from django.core.exceptions import *
 from .managers import (LanguageManager, AuthorManager, BookManager)
 #import pdb; pdb.set_trace()
-
+#comment add
 class BaseModel(models.Model):
 	STATUS = (
         ('A', 'Active'),

@@ -775,8 +775,6 @@ class HardCopyViews(View):
 		return send_400(self.response)
 
 
-		
-
 
 
 
