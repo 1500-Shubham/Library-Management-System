@@ -54,7 +54,6 @@ class AuthorManager(models.Manager):
 		query_obj=[]
 		for ath in author_list:
 			try:
-				print("hiii")
 				query_obj.append(Author.objects.get(name=ath.lower()))
 			except:
 				raise ObjectDoesNotExist("Author with " +ath+ " name does not exist")
