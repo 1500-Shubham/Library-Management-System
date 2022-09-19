@@ -33,21 +33,6 @@ class Language(BaseModel):
 				'scripts':self.script,
 				'about':self.about,
 			}
-<<<<<<< HEAD
-	objects = LanguageManager()
-
-class AuthorManager(models.Manager):
-	#returns query set of objects of author that matches with author_list values
-	def get_queryset_objects(self,author_list):
-		query_obj=[]
-		for ath in author_list:
-			try:
-				query_obj.append(Author.objects.get(name=ath.lower()))
-			except:
-				raise ObjectDoesNotExist("Author with " +ath+ " name does not exist")
-		return query_obj
-=======
->>>>>>> a845bdf8d8083f1ac701f5dc7695d9620306a246
 
 class Author(BaseModel):
 	readonly_fields=('author_id')
