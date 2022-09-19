@@ -20,7 +20,7 @@ class LanguageViews(View):
 				try:
 					self.response['res_data']=Language.objects.get(name=params.get('name').lower()).as_dict()
 				except:
-					raise ObjectDoesNotExist("Requested language does not exist")
+					raise ObjectDoesNotExist(LANGUAGE_ERROR)
 			else:
 				res=[]
 				lan=Language.objects.all()
@@ -34,7 +34,7 @@ class LanguageViews(View):
 		except (ValidationError,ObjectDoesNotExist) as ex:
 			self.response['res_str'] = str(ex)	
 		except Exception as e:
-			self.response['Error Msg']="Something is Wrong"
+			self.response['Error Message']=EXCEPTION
 		return send_400(self.response)		
 	
 	def post(self, request, *args, **kwargs):
@@ -43,20 +43,20 @@ class LanguageViews(View):
 			validate_schema(params)
 			name = params.get('name').lower()
 			if Language.objects.filter(name=name).exists():
-				raise ObjectAlreadyExist("Language with this name already exist")
+				raise ObjectAlreadyExist(LANGUAGE_EXIST)
 			script = params.get('script')
 			about = params.get('about')
 			language_obj = Language.objects.create(name=name,script=script,about=about)
 			language_obj.status='A'
 			language_obj.save()
 			self.response['res_data'] = language_obj.as_dict()
-			self.response['res_str'] = "Language Successfully Created"
+			self.response['res_str'] = LANGUAGE_CREATED
 			return send_201(self.response)
 
 		except (ValidationError,ObjectDoesNotExist,ObjectAlreadyExist) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
-			self.response['Error Msg']="Something is Wrong"
+			self.response['Error Message']=EXCEPTION
 		return send_400(self.response)
 			
 	def delete(self, request, *args, **kwargs):
@@ -69,15 +69,15 @@ class LanguageViews(View):
 				language_obj.status='D'
 				language_obj.save()
 				self.response['res_data'] = language_obj.as_dict()
-				self.response['res_str'] = "Language Status Changed To Deleted"
+				self.response['res_str'] =LANGUAGE_DELETED
 				return send_201(self.response)
 			except:
-				raise ObjectDoesNotExist("Language not found")
+				raise ObjectDoesNotExist(LANGUAGE_ERROR)
 			
 		except (ValidationError,ObjectDoesNotExist) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
-			self.response['Error Msg']="Something is Wrong"
+			self.response['Error Message']=EXCEPTION
 		return send_404(self.response)
 	
 	def put (self, request, *args, **kwargs):
@@ -92,15 +92,15 @@ class LanguageViews(View):
 				language_obj.about=about
 				language_obj.save()
 				self.response['res_data'] = language_obj.as_dict()
-				self.response['res_str'] = "Language Updated Successfully"
+				self.response['res_str'] = LANGUAGE_UPDATE
 			except:
-				raise ObjectDoesNotExist("Requested language does not exist")
+				raise ObjectDoesNotExist(LANGUAGE_ERROR)
 			return send_201(self.response)
 
 		except (ValidationError,ObjectDoesNotExist) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
-			self.response['Error Msg']="Something is Wrong"
+			self.response['Error Msg']=EXCEPTION
 		return send_400(self.response)
 		
 class AuthorViews(View):
@@ -117,7 +117,7 @@ class AuthorViews(View):
 				try:
 					self.response['res_data']=Author.objects.get(name=params.get('name').lower()).as_dict()
 				except:
-					raise ObjectDoesNotExist("Requested Author does not exist")
+					raise ObjectDoesNotExist(AUTHOR_ERROR)
 			else:
 				ath=Author.objects.all()
 				res=[]
@@ -131,7 +131,7 @@ class AuthorViews(View):
 		except (ValidationError,ObjectDoesNotExist) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
-			self.response['Error Msg']="Something is Wrong"
+			self.response['Error Message']=EXCEPTION
 		return send_400(self.response)
 
 	def post(self, request, *args, **kwargs):
@@ -143,22 +143,22 @@ class AuthorViews(View):
 			meta_data = params.get('meta_data')
 
 			if Author.objects.filter(name=name).exists():
-				raise ObjectAlreadyExist("Author with this name already exist")
+				raise ObjectAlreadyExist(AUTHOR_EXIST)
 
 			if meta_data and not is_json(meta_data):
-				raise ValueError("meta-data is not in JSON form")
+				raise ValueError(JSON_ERROR)
 
 			author_obj = Author.objects.create(name=name,meta_data=meta_data,description=description)
 			author_obj.status='A'
 			author_obj.save()
 			self.response['res_data'] = author_obj.as_dict()
-			self.response['res_str'] = "Author Successfully Created"
+			self.response['res_str'] = AUTHOR_CREATED
 			return send_201(self.response)
 
 		except (ValidationError,ObjectDoesNotExist,ValueError,ObjectAlreadyExist) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
-			self.response['Error Msg']="Something is Wrong"
+			self.response['Error Message']=EXCEPTION
 		return send_400(self.response)
 
 	def delete(self, request, *args, **kwargs):
@@ -172,15 +172,15 @@ class AuthorViews(View):
 				auth_obj.status='D'
 				auth_obj.save()
 				self.response['res_data'] = res
-				self.response['res_str'] = "Author Deleted Successfully"
+				self.response['res_str'] = AUTHOR_DELETED
 				return send_201(self.response)
 			except:
-				raise ObjectDoesNotExist("Author not found")
+				raise ObjectDoesNotExist(AUTHOR_ERROR)
 			
 		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
-			self.response['Error Msg']="Something is Wrong"
+			self.response['Error Msg']=EXCEPTION
 		return send_400(self.response)
 	
 	def put (self, request, *args, **kwargs):
@@ -193,20 +193,20 @@ class AuthorViews(View):
 				description = params.get('description')
 				meta_data = params.get('meta_data')
 				if meta_data and not is_json(meta_data):
-					raise ValueError("meta-data is not in JSON form")
+					raise ValueError(JSON_ERROR)
 				author_obj.description=description
 				author_obj.meta_data=meta_data
 				author_obj.save()
 				self.response['res_data'] = author_obj.as_dict()
-				self.response['res_str'] = "Author Updated Successfully"
+				self.response['res_str'] = AUTHOR_UPDATE
 			except:
-				raise ObjectDoesNotExist("Requested author does not exist")
+				raise ObjectDoesNotExist(AUTHOR_ERROR)
 			return send_201(self.response)
 
 		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
-			self.response['Error Msg']="Something is Wrong"
+			self.response['Error Message']=EXCEPTION
 		return send_400(self.response)	
 
 class PublisherViews(View):
@@ -224,7 +224,7 @@ class PublisherViews(View):
 				try:
 					self.response['res_data']=Publisher.objects.get(name=params.get('name').lower()).as_dict()
 				except:
-					raise ObjectDoesNotExist("Requested Publisher does not exist")
+					raise ObjectDoesNotExist(PUBLISHER_ERROR)
 			else:
 				pub=Publisher.objects.all()
 				res=[]
@@ -238,7 +238,7 @@ class PublisherViews(View):
 		except (ValidationError,ObjectDoesNotExist,ValueError,ObjectAlreadyExist) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
-			self.response['Error Msg']="Something is Wrong"
+			self.response['Error Msg']=EXCEPTION
 		return send_400(self.response)
 
 	def post(self, request, *args, **kwargs):
@@ -249,22 +249,22 @@ class PublisherViews(View):
 			meta_data = params.get('meta_data')
 
 			if Publisher.objects.filter(name=name).exists():
-				raise ObjectAlreadyExist("Publisher with this name already exist")
+				raise ObjectAlreadyExist(PUBLISHER_EXIST)
 
 			if meta_data and not is_json(meta_data):
-				raise ValueError("meta-data is not in JSON form")
+				raise ValueError(JSON_ERROR)
 
 			pub_obj = Publisher.objects.create(name=name,meta_data=meta_data)
 			pub_obj.status='A'
 			pub_obj.save()
 			self.response['res_data'] = pub_obj.as_dict()
-			self.response['res_str'] = "Publisher Successfully Created"
+			self.response['res_str'] = PUBLISHER_CREATED
 			return send_201(self.response)
 
 		except (ValidationError,ObjectDoesNotExist,ValueError,ObjectAlreadyExist) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
-			self.response['Error Msg']="Something is Wrong"
+			self.response['Error Msg']=EXCEPTION
 		return send_400(self.response)
 
 	def delete(self, request, *args, **kwargs):
@@ -278,15 +278,15 @@ class PublisherViews(View):
 				pub_obj.delete()
 				pub_obj.save()
 				self.response['res_data'] = res
-				self.response['res_str'] = "Publisher Deleted Successfully"
+				self.response['res_str'] = PUBLISHER_DELETED
 				return send_201(self.response)
 			except:
-				raise ObjectDoesNotExist("Publisher not found")
+				raise ObjectDoesNotExist(PUBLISHER_ERROR)
 			
 		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
-			self.response['Error Msg']="Something is Wrong"
+			self.response['Error Msg']=EXCEPTION
 		return send_400(self.response)
 
 	def put (self, request, *args, **kwargs):
@@ -295,21 +295,21 @@ class PublisherViews(View):
 			validate_schema(params)
 			name = params.get('name').lower()
 			if not Publisher.objects.filter(name=name).exists():
-				raise ObjectDoesNotExist("Requested Publisher does not exist")
+				raise ObjectDoesNotExist(PUBLISHER_ERROR)
 			meta_data = params.get('meta_data')
 			if meta_data and not is_json(meta_data):
-				raise ValueError("meta-data is not in JSON form")
+				raise ValueError(JSON_ERROR)
 			pub_obj = Publisher.objects.get(name=name)
 			pub_obj.meta_data=meta_data
 			pub_obj.save()
 			self.response['res_data'] = pub_obj.as_dict()
-			self.response['res_str'] = "Publisher Updated Successfully"
+			self.response['res_str'] = PUBLISHER_UPDATE
 			return send_201(self.response)
 
 		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
-			self.response['Error Msg']="Something is Wrong"
+			self.response['Error Msg']=EXCEPTION
 		return send_400(self.response)
 
 class BookViews(View):
@@ -351,25 +351,26 @@ class BookViews(View):
 	
 	def post(self, request, *args, **kwargs):
 		try:
+			#import pdb; pdb.set_trace()
 			params=request.POST.dict()
 			validate_schema(params,['name','author','publisher','language'])
 			name = params.get('name').lower()
 
 			author_list=[auth.strip() for auth in params.get('author').split(',') if auth != '']
 			if(len(author_list)==0):
-				raise ValidationError("Need at least one author")	
+				raise ValidationError(AUTHOR_NEEDED)	
 			lan_list=[_lang.strip() for _lang in params.get('language').split(',') if _lang != '']
 			if(len(lan_list)==0):
-				raise ValidationError("Need at least one language")
+				raise ValidationError(LANGUAGE_NEEDED)
 
 			publisher_name = params.get('publisher')
 			try:
 				publisher_obj=Publisher.objects.get(name=publisher_name.lower())
 			except:
-				raise ObjectDoesNotExist("Publisher with "+publisher_name + " name not exist")
+				raise ObjectDoesNotExist(PUBLISHER_ERROR+publisher_name )
 			extra_details = params.get('extra_details')
 			if extra_details and not is_json(extra_details):
-				raise ValueError("extra_details is not in JSON form")
+				raise ValueError(JSON_ERROR)
 
 			book_type = None
 			book_param=params.get('book_type')
@@ -382,13 +383,13 @@ class BookViews(View):
 			book_obj.language.add(*(Language.objects.get_queryset_objects(lan_list)))
 			book_obj.save()
 			self.response['res_data'] = book_obj.as_dict()
-			self.response['res_str'] = "Book Successfully Created"
+			self.response['res_str'] = BOOK_CREATED
 			return send_201(self.response)
 
 		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
-			self.response['Error Msg']="Something is Wrong"
+			self.response['Error Message']=EXCEPTION
 		return send_400(self.response)
 
 	def delete(self, request, *args, **kwargs):
@@ -402,15 +403,15 @@ class BookViews(View):
 				book_obj.status='D'
 				book_obj.save()
 				self.response['res_data'] = res
-				self.response['res_str'] = "Book Status Change to Deleted Successfully"
+				self.response['res_str'] = BOOK_DELETED
 			except:
-				raise ObjectDoesNotExist("Requested BOOK does not exist")
+				raise ObjectDoesNotExist(BOOK_ERROR)
 			return send_201(self.response)
 
 		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
-			self.response['Error Msg']="Something is Wrong"
+			self.response['Error Msg']=EXCEPTION
 		return send_400(self.response)
 
 	def put(self, request, *args, **kwargs):
@@ -421,7 +422,7 @@ class BookViews(View):
 			try:
 				book_obj=Book.objects.get(book_id=book_id)
 			except:
-				raise ObjectDoesNotExist("Requested BOOK does not exist")
+				raise ObjectDoesNotExist(BOOK_ERROR)
 	
 			author_list=[auth.strip() for auth in params.get('author') .split(',') if auth != '']
 			lan_list=[_lang.strip() for _lang in params.get('language').split(',') if _lang != '']
@@ -429,7 +430,7 @@ class BookViews(View):
 			extra_details=book_obj.extra_details 
 			extra_param = params.get('extra_details')
 			if extra_param and not is_json(extra_param):
-				raise ValueError("extra_details is not in JSON form")
+				raise ValueError(JSON_ERROR)
 			elif extra_param:
 				extra_details=extra_param
 
@@ -444,13 +445,13 @@ class BookViews(View):
 			book_obj.language.add(*(Language.objects.get_queryset_objects(lan_list)))
 			book_obj.save()
 			self.response['res_data'] = book_obj.as_dict()
-			self.response['res_str'] = "Book Updated Successfully"
+			self.response['res_str'] = BOOK_UPDATE
 			return send_201(self.response)
 
 		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
-			self.response['Error Msg']="Something is Wrong"
+			self.response['Error Message']=EXCEPTION
 		return send_400(self.response)
 
 class EBookViews(View):
@@ -466,7 +467,7 @@ class EBookViews(View):
 				try:
 					self.response['res_data']=EBook.objects.get(ebook_id=params.get('ebook_id')).as_dict()
 				except:
-					raise ObjectDoesNotExist("Requested Ebook does not exist")
+					raise ObjectDoesNotExist(EBOOK_ERROR)
 			else:
 				ebooks=EBook.objects.all()
 				res=[]
@@ -480,48 +481,48 @@ class EBookViews(View):
 		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
-			self.response['Error Msg']="Something is Wrong"
+			self.response['Error Msg']=EXCEPTION
 		return send_400(self.response)
 
 	def post(self, request, *args, **kwargs):
 		try:
 			params=request.POST.dict() 
-			validate_schema(params,['book_id'],"Mandatory Book Key is needed")
+			validate_schema(params,['book_id'])
 			try:
 				book = Book.objects.get(book_id=params.get('book_id'))
 			except:
-				raise ObjectDoesNotExist("Book with given id doesnot exist "+params.get('book_id'))
+				raise ObjectDoesNotExist(BOOK_ERROR+params.get('book_id'))
 			book_location = params.get('book_location')
 			ebook_obj = EBook.objects.create( book=book, book_location=book_location)
 			self.response['res_data'] = ebook_obj.as_dict()
-			self.response['res_str'] = "EBook Successfully Created"
+			self.response['res_str'] = EBOOK_CREATED
 			return send_201(self.response)
 		
 		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
-			self.response['Error Msg']="Something is Wrong"
+			self.response['Error Message']=EXCEPTION
 		return send_400(self.response)
 
 	def delete(self, request, *args, **kwargs):
 		try:
 			params=request.GET.dict()
-			validate_schema(params,['ebook_id'],"Ebook id is needed")
+			validate_schema(params,['ebook_id'])
 			try:
 				ebook_obj = EBook.objects.get(ebook_id=params.get('ebook_id'))
 			except:
-				raise ObjectDoesNotExist("EBook with given id doesnot exist "+params.get('ebook_id'))
+				raise ObjectDoesNotExist(EBOOK_ERROR+params.get('ebook_id'))
 			res=ebook_obj.as_dict()
 			ebook_obj.delete()
 			ebook_obj.save()
 			self.response['res_data'] = res
-			self.response['res_str'] = "EBook Deleted Successfully"
+			self.response['res_str'] = EBOOK_DELETED
 			return send_201(self.response)
 
 		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
-			self.response['Error Msg']="Something is Wrong"
+			self.response['Error Message']=EXCEPTION
 		return send_400(self.response)
 
 	def put (self, request, *args, **kwargs):
@@ -531,18 +532,18 @@ class EBookViews(View):
 			try:
 				ebook_obj = EBook.objects.get(ebook_id=params.get('ebook_id'))
 			except:
-				raise ObjectDoesNotExist("EBook with given id doesnot exist "+params.get('ebook_id'))
+				raise ObjectDoesNotExist(EBOOK_ERROR+params.get('ebook_id'))
 			ebook_obj.book_location=params.get('book_location')
 			ebook_obj.save()
 			res=ebook_obj.as_dict()
 			self.response['res_data'] = res
-			self.response['res_str'] = "EBook Location Updated Successfully"
+			self.response['res_str'] = EBOOK_UPDATE
 			return send_201(self.response)
 
 		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
-			self.response['Error Msg']="Something is Wrong"
+			self.response['Error Message']=EXCEPTION
 		return send_400(self.response)	
 
 class UserViews(View):
@@ -556,13 +557,13 @@ class UserViews(View):
 			try:
 				self.response['res_data']=User.objects.get(email_id=params.get('email_id')).as_dict()
 			except:
-				raise ValidationError("User with this email id does not exist")
+				raise ValidationError(USER_ERROR)
 			return send_201(self.response)
 			
 		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
-			self.response['Error Msg']="Something is Wrong"
+			self.response['Error Message']=EXCEPTION
 		return send_400(self.response)
 	
 	def post(self, request, *args, **kwargs):
@@ -578,13 +579,13 @@ class UserViews(View):
 
 			regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
 			if not re.fullmatch(regex, email_id):
-				raise ValidationError("Email Id is not correct")
+				raise ValidationError(EMAIL_ERROR)
 			if User.objects.filter(email_id=email_id).exists():
-				raise ValidationError("Email Id Already Exist")
+				raise ValidationError(EMAIL_EXIST)
 			
 			meta_data = params.get('meta_data')
 			if meta_data and not is_json(meta_data):
-				raise ValueError("meta_data is not in JSON form")
+				raise ValueError(JSON_ERROR)
 
 			subscribed=False
 			subscription=params.get('subscription')
@@ -598,13 +599,13 @@ class UserViews(View):
 			user_obj.favourited.add(*(Book.objects.get_queryset_objects(fav_book)))
 			user_obj.save()
 			self.response['res_data'] = user_obj.as_dict()
-			self.response['res_str'] = "User Successfully Created"
+			self.response['res_str'] = USER_CREATED
 			return send_201(self.response)
 
 		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
-			self.response['Error Msg']="Something is Wrong"
+			self.response['Error Msg']=EXCEPTION
 		return send_400(self.response)
 
 	def delete(self, request, *args, **kwargs):
@@ -616,15 +617,15 @@ class UserViews(View):
 				user_obj.status='D'
 				user_obj.save()
 				self.response['res_data'] = user_obj.as_dict()
-				self.response['res_str'] = "User Status Change To Deleted Successfully"
+				self.response['res_str'] = USER_DELETED
 			except:
-				raise ValidationError("User with this email id doesnot exist")
+				raise ValidationError(USER_ERROR)
 			return send_201(self.response)
 			
 		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
-			self.response['Error Msg']="Something is Wrong"
+			self.response['Error Msg']=EXCEPTION
 		return send_400(self.response)
 
 	def put (self, request, *args, **kwargs):
@@ -634,11 +635,11 @@ class UserViews(View):
 			try:	
 				user_obj=User.objects.get(email_id=params.get('email_id'))
 			except:
-				raise ValidationError("User with this email id doesnot exist")
+				raise ValidationError(USER_ERROR)
 			mobile=params.get('mobile')
 			meta_data = params.get('meta_data')
 			if meta_data and not is_json(meta_data):
-				raise ValueError("meta_data is not in JSON form")
+				raise ValueError(JSON_ERROR)
 
 			subscribed=user_obj.subscription
 			subscription=params.get('subscription')
@@ -658,13 +659,13 @@ class UserViews(View):
 			user_obj.role=role_status
 			user_obj.save()
 			self.response['res_data'] = user_obj.as_dict()
-			self.response['res_str'] = "User Updated Successfully"
+			self.response['res_str'] = USER_UPDATE
 			return send_201(self.response)
 
 		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
-			self.response['Error Msg']="Something is Wrong"
+			self.response['Error Msg']=EXCEPTION
 		return send_400(self.response)
 
 class HardCopyViews(View):
@@ -679,13 +680,13 @@ class HardCopyViews(View):
 			try:
 				self.response['res_data']=HardCopy.objects.get(hard_copy_id=hard_copy_id).as_dict()
 			except:
-				raise ObjectDoesNotExist("Requested HardCopy does not exist")
+				raise ObjectDoesNotExist(HARDCOPY_ERROR)
 			return send_201(self.response)
 				
 		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
-			self.response['Error Msg']="Something is Wrong"
+			self.response['Error Msg']=EXCEPTION
 		return send_400(self.response)
 	
 	def post(self, request, *args, **kwargs):
@@ -696,7 +697,7 @@ class HardCopyViews(View):
 			try:	
 				book_obj=Book.objects.get(book_id=book_id)
 			except:
-				raise ObjectDoesNotExist("Book with this"+str(book_id)+"does not exist")
+				raise ObjectDoesNotExist(BOOK_ERROR+str(book_id))
 			is_lent=False
 			lent=params.get('is_lent')
 			if lent and lent.lower()=='true':
@@ -709,13 +710,13 @@ class HardCopyViews(View):
 
 			hardcopy_obj = HardCopy.objects.create( book_id=book_obj, is_lent=is_lent,lent_to=user_obj)
 			self.response['res_data'] = hardcopy_obj.as_dict()
-			self.response['res_str'] = "HardCopy Successfully Created"
+			self.response['res_str'] = HARDCOPY_CREATED
 			return send_201(self.response)
 		
 		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
-			self.response['Error Msg']="Something is Wrong"
+			self.response['Error Msg']=EXCEPTION
 		return send_400(self.response)
 
 	def delete(self, request, *args, **kwargs):
@@ -726,17 +727,17 @@ class HardCopyViews(View):
 			try:
 				hardcopy_obj=HardCopy.objects.get(hard_copy_id=hard_copy_id)
 			except:
-				raise ObjectDoesNotExist("Requested HardCopy does not exist")
+				raise ObjectDoesNotExist(HARDCOPY_ERROR)
 			self.response['res_data'] = hardcopy_obj.as_dict()
 			hardcopy_obj.delete()
 			hardcopy_obj.save()
-			self.response['res_str'] = "HardCopy Deleted Successfully"
+			self.response['res_str'] =HARDCOPY_DELETED
 			return send_201(self.response)
 				
 		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
-			self.response['Error Msg']="Something is Wrong"
+			self.response['Error Msg']=EXCEPTION
 		return send_400(self.response)
 
 	def put (self, request, *args, **kwargs):
@@ -747,7 +748,7 @@ class HardCopyViews(View):
 			try:
 				hardcopy_obj=HardCopy.objects.get(hard_copy_id=hard_copy_id)
 			except:
-				raise ObjectDoesNotExist("Requested HardCopy does not exist")
+				raise ObjectDoesNotExist(HARDCOPY_ERROR)
 
 			is_lent=hardcopy_obj.is_lent
 			lent=params.get('is_lent')
@@ -757,7 +758,7 @@ class HardCopyViews(View):
 			lent_to=params.get('lent_to')
 			user_obj=hardcopy_obj.lent_to
 			if lent_to and not User.objects.filter(email_id=lent_to).exists():
-				raise ObjectDoesNotExist("User with this "+str(lent_to)+" does not exist")
+				raise ObjectDoesNotExist(USER_DOES_NOT_EXIST+str(lent_to))
 			elif lent_to:
 				user_obj=User.objects.get(email_id=lent_to)
 			
@@ -765,17 +766,15 @@ class HardCopyViews(View):
 			hardcopy_obj.lent_to=user_obj
 			hardcopy_obj.save()
 			self.response['res_data'] = hardcopy_obj.as_dict()
-			self.response['res_str'] = "HardCopy Updated Successfully"
+			self.response['res_str'] = HARDCOPY_UPDATE
 			return send_201(self.response)
 
 		except (ValidationError,ObjectDoesNotExist,ValueError) as ex:
 			self.response['res_str'] = str(ex)
 		except Exception as e:
-			self.response['Error Msg']="Something is Wrong"
+			self.response['Error Msg']=EXCEPTION
 		return send_400(self.response)
 
-
-		
 
 
 

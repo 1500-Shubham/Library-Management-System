@@ -1,5 +1,6 @@
 from .exceptions import *
 import json
+from .constants import *
 
 def validate_schema(params, required_key=['name'],msg=""):
     keys = params.keys()
@@ -7,8 +8,11 @@ def validate_schema(params, required_key=['name'],msg=""):
     for key in required_key:
         if key in keys:
             key_len += 1
+        if not key:
+            raise ValidationError(REQUIRED_KEY_ERROR)
+
     if len(required_key) != key_len:
-        raise ValidationError("Invalid data"+msg)
+        raise ValidationError(INVALID_DATA+msg)
 
 def is_json(myjson):
 		try:
