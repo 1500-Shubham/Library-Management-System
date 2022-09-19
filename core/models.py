@@ -2,8 +2,8 @@ from django.db import models
 import uuid
 from .exceptions import *
 from django.core.exceptions import *
+from .managers import (LanguageManager, AuthorManager, BookManager)
 #import pdb; pdb.set_trace()
-
 class BaseModel(models.Model):
 	STATUS = (
         ('A', 'Active'),
@@ -16,26 +16,13 @@ class BaseModel(models.Model):
 
 	class Meta:
 		abstract = True
-
-class LanguageManager(models.Manager):
-	#returns query set of objects of languages that matches with languages_list values
-	def get_queryset_objects(self,lan_list):
-		query_obj=[]
-		for lan in lan_list:
-			try:
-				query_obj.append(Language.objects.get(name=lan.lower()))
-			except:
-				raise ObjectDoesNotExist("Language with " +lan+ " name does not exist")
-				
-		return query_obj
-
+		
 class Language(BaseModel):
-	#readonly_fields=('language_id')
 	language_id = models.UUIDField(primary_key=True, default = uuid.uuid4,editable = False)
 	name = models.CharField(max_length=100,unique=True)
 	script = models.CharField(max_length=100,null=True,blank=True)
 	about = models.CharField(max_length=100,null=True,blank=True)
-
+	objects = LanguageManager()
 	def __str__(self):
 		return self.name
 
@@ -46,6 +33,7 @@ class Language(BaseModel):
 				'scripts':self.script,
 				'about':self.about,
 			}
+<<<<<<< HEAD
 	objects = LanguageManager()
 
 class AuthorManager(models.Manager):
@@ -58,6 +46,8 @@ class AuthorManager(models.Manager):
 			except:
 				raise ObjectDoesNotExist("Author with " +ath+ " name does not exist")
 		return query_obj
+=======
+>>>>>>> a845bdf8d8083f1ac701f5dc7695d9620306a246
 
 class Author(BaseModel):
 	readonly_fields=('author_id')
@@ -93,16 +83,6 @@ class Publisher(BaseModel):
 		'name':self.name,
 		'meta_data':self.meta_data,
 		}
-
-class BookManager(models.Manager):
-	def get_queryset_objects(self,book_list):
-		query_obj=[]
-		for book in book_list:
-			try:
-				query_obj.append(Book.objects.get(book_id=book))
-			except:
-				raise ObjectDoesNotExist("Book with ID: " +book+ " does not exist")
-		return query_obj
 
 class Book(BaseModel):
 	BOOK_TYPE = (
